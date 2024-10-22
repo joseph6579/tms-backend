@@ -1,5 +1,6 @@
 from pathlib import Path
 from decouple import config
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -13,10 +14,7 @@ SECRET_KEY = config('SECRET_KEY', cast=str)
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-
 # Application definition
-
 IN_BUILT_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -32,6 +30,7 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
+    'organisations',
     'users',
 ]
 
@@ -134,4 +133,6 @@ EMAIL_PORT = config('EMAIL_PORT', cast=int, default=587)
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+AUTH_USER_MODEL = 'users.CustomUser'
 
