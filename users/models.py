@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from users.managers import CustomUserManager
 
 USER_ROLES = (
-    ('admin', 'Admin'),
+    ('admin', 'admin'),
     ('staff', 'staff'),
     ('driver', 'driver')
 )
@@ -26,6 +26,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     organisation = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, null=True, blank=True)
     role = models.CharField(choices=USER_ROLES, max_length=10, default='staff')
+    is_master_user = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -43,6 +44,11 @@ class Driver(CustomUser):
 
     def __str__(self):
         return f'{self.user.first_name} {self.user.last_name}'
+    
+    class Meta:
+        verbose_name_plural = 'Drivers'
+        verbose_name = 'Driver'
+        ordering = ['-id']
 
 
 

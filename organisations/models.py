@@ -1,4 +1,5 @@
 from django.db import models
+
 from commons.behaviour import CommonInfo
 
 
@@ -9,3 +10,8 @@ class Organisation(CommonInfo):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        verbose_name_plural = 'Organisations'
+        db_table = 'organisations'
+        ordering = ['-id']
