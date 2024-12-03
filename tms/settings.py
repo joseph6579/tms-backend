@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,6 +34,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'organisations',
     'users',
+    'fleet',
 ]
 
 INSTALLED_APPS = IN_BUILT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
