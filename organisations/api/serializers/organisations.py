@@ -25,7 +25,7 @@ class OrganisationSerializer(serializers.ModelSerializer):
             if user:
                 raise serializers.ValidationError('User with email already exists')
         except User.DoesNotExist:
-            user = User.objects.create_user(email=email, password='password')
+            user = User.objects.create_user(email=email, first_name=validated_data.get('name'), last_name='Admin')
             organisation = Organisation.objects.create(**validated_data)
             pwd = get_random_string(length=10)
             user.set_password(pwd)
