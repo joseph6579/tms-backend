@@ -23,6 +23,8 @@ DRIVER_STATUSES = (
 class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     username = None
+    first_name = models.CharField(_('first name'), max_length=150)
+    last_name = models.CharField(_('last name'), max_length=150)
     email = models.EmailField(_('email address'), unique=True)
     organisation = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, null=True, blank=True)
     role = models.CharField(choices=USER_ROLES, max_length=10, default='staff')

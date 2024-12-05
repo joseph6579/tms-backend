@@ -5,15 +5,9 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', cast=str)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', cast=bool, default=False)
 
 ALLOWED_HOSTS = []
 # Application definition
@@ -48,6 +42,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
+    # 'commons.middleware.CustomRollbarNotifierMiddleware',
 ]
 
 ROOT_URLCONF = 'tms.urls'
@@ -55,7 +51,7 @@ ROOT_URLCONF = 'tms.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -177,3 +173,38 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
 }
+
+
+# Email Settings
+EMAIL_HOST = config('EMAIL_HOST', cast=str)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', cast=str)
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', cast=str)
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Rollbar Settings
+ROLLBAR_TOKEN = config('ROLLBAR_TOKEN', cast=str)
+ROLLBAR = {
+    'access_token': ROLLBAR_TOKEN,
+    'environment': 'development' if DEBUG else 'production',
+    'code_version': '1.0',
+    'root': BASE_DIR,
+}
+# MIDDLEWARE += ['tms.middleware.CustomRollbarNotifierMiddleware',]
+
+
+# Celery Settings
+REDISPORT = config('REDISPORT', cast=int, default=6379)
+REDISHOST = config('REDISHOST', cast=str, default='localhost')
+CELERY_BROKER_URL = f'redis://{REDISHOST}:{REDISPORT}'
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_TASK_IGNORE_RESULT = False
+CELERY_RESULT_EXPIRES = config('CELERY_RESULT_EXPIRES', default=60 * 24, cast=int)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_WORKER_CONCURRENCY = config('CELERY_WORKER_CONCURRENCY', default=4, cast=int)
+
+
+# Frontend Settings
+LOGIN_URL = config('LOGIN_URL', cast=str, default='http://localhost:3000/login')
+RESET_PASSWORD_URL = config('RESET_PASSWORD_URL', cast=str, default='http://localhost:3000/reset-password')
