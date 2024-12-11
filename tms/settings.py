@@ -205,3 +205,6 @@ STATIC_ROOT = BASE_DIR / 'static'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+ADMIN_EMAIL = config('ADMIN_EMAIL', cast=str)
+ADMIN_PASSWORD = config('ADMIN_PASSWORD', cast=str)
