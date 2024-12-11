@@ -146,8 +146,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
-    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
-    'DEFAULT_VERSION': 'v1',
     'DEFAULT_PAGINATION_CLASS': 'commons.pagination.CustomPageNumberPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_FILTER_BACKENDS': (
@@ -175,13 +173,6 @@ SIMPLE_JWT = {
 }
 
 
-# Email Settings
-EMAIL_HOST = config('EMAIL_HOST', cast=str)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', cast=str)
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', cast=str)
-EMAIL_PORT = config('EMAIL_PORT', cast=int)
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
 # Rollbar Settings
 ROLLBAR_TOKEN = config('ROLLBAR_TOKEN', cast=str)
 ROLLBAR = {
@@ -208,3 +199,9 @@ CELERY_WORKER_CONCURRENCY = config('CELERY_WORKER_CONCURRENCY', default=4, cast=
 # Frontend Settings
 LOGIN_URL = config('LOGIN_URL', cast=str, default='http://localhost:3000/login')
 RESET_PASSWORD_URL = config('RESET_PASSWORD_URL', cast=str, default='http://localhost:3000/reset-password')
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'static'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
