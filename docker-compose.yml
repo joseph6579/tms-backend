@@ -19,9 +19,9 @@ services:
             "CMD-SHELL",
             "pg_isready -U ${DB_USER} -d ${DB_NAME} -h localhost -p 5432"
           ]
-        interval: 5s
-        timeout: 5s
-        retries: 5
+        interval: 10s
+        timeout: 10s
+        retries: 10
 
     web:
         build:
@@ -38,8 +38,10 @@ services:
         networks:
             - tms_network
         depends_on:
-            - db
-            - redis
+            db:
+              condition: service_healthy
+            redis:
+              condition: service_started
 
     pgadmin:
         image: dpage/pgadmin4
@@ -52,6 +54,9 @@ services:
             - "5050:80"
         networks:
             - tms_network
+        depends_on:
+          db:
+            condition: service_healthy
 
     nginx:
         build: ./deployment/nginx

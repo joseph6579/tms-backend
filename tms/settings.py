@@ -1,3 +1,4 @@
+import os.path
 from datetime import timedelta
 from pathlib import Path
 
@@ -201,10 +202,10 @@ LOGIN_URL = config('LOGIN_URL', cast=str, default='http://localhost:3000/login')
 RESET_PASSWORD_URL = config('RESET_PASSWORD_URL', cast=str, default='http://localhost:3000/reset-password')
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 ADMIN_EMAIL = config('ADMIN_EMAIL', cast=str)
 ADMIN_PASSWORD = config('ADMIN_PASSWORD', cast=str)
