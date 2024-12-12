@@ -92,6 +92,9 @@ services:
         context: .
         dockerfile: ./deployment/celery/celery.dockerfile
       container_name: tms_celery
+      environment:
+        - CELERY_BROKER_URL=redis://tms_redis:6379/0
+        - PYTHONPATH=/tms-backend:/tms-backend/tms
       restart: unless-stopped
       volumes:
         - .:/tms-backend
@@ -108,6 +111,10 @@ services:
         context: .
         dockerfile: ./deployment/celery/flower.dockerfile
       container_name: tms_celery_flower
+      environment:
+        - PYTHONPATH=/tms-backend:/tms-backend/tms
+        - FLOWER_URL_PREFIX=/flower
+        - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
       restart: unless-stopped
       volumes:
         - .:/tms-backend
@@ -119,6 +126,8 @@ services:
         - celery
       networks:
         - tms_network
+      expose:
+        - "5555"
 
 
 networks:
