@@ -30,6 +30,8 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('api/<str:version>/auth/', include('djoser.urls.jwt')),
+    path('api/<str:version>/accounts/', include('allauth.urls')),
+    path('api/<str:version>/social-accounts/', include('allauth.socialaccount.urls')),
     path('api/<str:version>/', include('users.urls')),
     path('api/<str:version>/', include('organisations.urls')),
 ]
