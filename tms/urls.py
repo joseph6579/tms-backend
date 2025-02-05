@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
@@ -5,7 +6,8 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework.documentation import include_docs_urls
-from django.conf import settings
+
+from users.api.views.users import GoogleLoginView
 
 TITLE = 'TMS Backend API'
 DESCRIPTION = 'API for TMS Backend'
@@ -30,8 +32,12 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('api/<str:version>/auth/', include('djoser.urls.jwt')),
+    path('api/<str:version>/accounts/', include('allauth.urls')),
+    path('api/<str:version>/social-accounts/', include('allauth.socialaccount.urls')),
     path('api/<str:version>/', include('users.urls')),
     path('api/<str:version>/', include('organisations.urls')),
+    path('api/<str:version>/gs-login/', GoogleLoginView.as_view(), name='google-login'),
+
 ]
 
 # Serve static and media files in development

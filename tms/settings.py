@@ -1,5 +1,6 @@
 import os.path
 from datetime import timedelta
+from email.policy import default
 from pathlib import Path
 
 from decouple import config
@@ -25,6 +26,10 @@ THIRD_PARTY_APPS = [
     'rest_framework',
     'djoser',
     'drf_yasg',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 LOCAL_APPS = [
@@ -45,6 +50,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
     # 'commons.middleware.CustomRollbarNotifierMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = 'tms.urls'
@@ -60,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
             ],
         },
     },
@@ -125,6 +132,11 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.1/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Authentication Backends
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 # Email Settings
 EMAIL_HOST = config('EMAIL_HOST', cast=str, default='smtp.gmail.com')
@@ -209,3 +221,36 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 ADMIN_EMAIL = config('ADMIN_EMAIL', cast=str)
 ADMIN_PASSWORD = config('ADMIN_PASSWORD', cast=str)
+
+# AllAUTH Settings
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
+# Google OAuth Settings
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID', cast=str)
+GOOGLE_CLIENT_SECRET = config('GOOGLE_CLIENT_SECRET', cast=str)
+GOOGLE_API_KEY = config('GOOGLE_API_KEY', cast=str, default='')
+GOOGLE_REDIRECT_URI = config('GOOGLE_REDIRECT_URI', cast=str, default='http://localhost:8000')
+
+# Provider specific settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'offline',
+        },
+        'EMAIL_AUTHENTICATION': True,
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        'APP': {
+            'client_id': GOOGLE_CLIENT_ID,
+            'secret': GOOGLE_CLIENT_SECRET,
+            'key': GOOGLE_API_KEY,
+        }
+    }
+}
+
