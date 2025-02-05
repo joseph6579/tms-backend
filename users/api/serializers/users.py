@@ -19,3 +19,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
         ref_name = 'Users'
         required_fields = ['email', 'first_name', 'last_name', 'organisation']
+
+
+class UserMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'email']
+        ref_name = 'Users'

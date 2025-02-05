@@ -225,6 +225,13 @@ ADMIN_PASSWORD = config('ADMIN_PASSWORD', cast=str)
 # AllAUTH Settings
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
+# Google OAuth Settings
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID', cast=str)
+GOOGLE_CLIENT_SECRET = config('GOOGLE_CLIENT_SECRET', cast=str)
+GOOGLE_API_KEY = config('GOOGLE_API_KEY', cast=str, default='')
+GOOGLE_REDIRECT_URI = config('GOOGLE_REDIRECT_URI', cast=str, default='http://localhost:8000')
+
 # Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -240,11 +247,10 @@ SOCIALACCOUNT_PROVIDERS = {
         # (``socialaccount`` app) containing the required client
         # credentials, or list them here:
         'APP': {
-            'client_id': config('GOOGLE_CLIENT_ID', cast=str),
-            'secret': config('GOOGLE_CLIENT_SECRET', cast=str),
-            'key': config('GOOGLE_API_KEY', cast=str, default=''),
+            'client_id': GOOGLE_CLIENT_ID,
+            'secret': GOOGLE_CLIENT_SECRET,
+            'key': GOOGLE_API_KEY,
         }
     }
 }
 
-GOOGLE_REDIRECT_URI = config('GOOGLE_REDIRECT_URI', cast=str, default='http://localhost:8000')
