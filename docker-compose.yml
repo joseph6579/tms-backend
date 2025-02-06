@@ -58,23 +58,23 @@ services:
           db:
             condition: service_healthy
 
-    nginx:
-        build: ./deployment/nginx
-        container_name: tms_nginx
-        restart: unless-stopped
-        ports:
-            - "80:80"
-        networks:
-            - tms_network
-        volumes:
-          - ./static:/code/static
-          - ./media:/code/media
-          - ./deployment/nginx/nginx.conf:/etc/nginx/nginx.conf
-          - ./deployment/nginx/:/etc/nginx/conf.d
-        links:
-          - web
-        depends_on:
-          - web
+#    nginx:
+#        build: ./deployment/nginx
+#        container_name: tms_nginx
+#        restart: unless-stopped
+#        ports:
+#            - "80:80"
+#        networks:
+#            - tms_network
+#        volumes:
+#          - ./static:/code/static
+#          - ./media:/code/media
+#          - ./deployment/nginx/nginx.conf:/etc/nginx/nginx.conf
+#          - ./deployment/nginx/:/etc/nginx/conf.d
+#        links:
+#          - web
+#        depends_on:
+#          - web
 
     redis:
         image: redis:alpine
