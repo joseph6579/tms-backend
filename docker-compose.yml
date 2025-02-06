@@ -34,7 +34,7 @@ services:
           - ./static:/code/static
           - ./media:/code/media
         expose:
-          - "8000"
+          - "8000:8000"
         networks:
             - tms_network
         depends_on:
@@ -127,7 +127,7 @@ services:
       networks:
         - tms_network
       expose:
-        - "5555"
+        - "5555:5555"
 
 
 networks:
