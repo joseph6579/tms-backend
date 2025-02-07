@@ -1,6 +1,5 @@
 import os.path
 from datetime import timedelta
-from email.policy import default
 from pathlib import Path
 
 from decouple import config
@@ -137,6 +136,8 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
+
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=str, default='http://localhost').split(',')
 
 # Email Settings
 EMAIL_HOST = config('EMAIL_HOST', cast=str, default='smtp.gmail.com')
