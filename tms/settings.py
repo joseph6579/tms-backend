@@ -10,6 +10,8 @@ SECRET_KEY = config('SECRET_KEY', cast=str)
 
 DEBUG = config('DEBUG', cast=bool, default=False)
 
+ENVIRONMENT = config('ENVIRONMENT', cast=str, default='local')
+
 ALLOWED_HOSTS = ['*']
 # Application definition
 IN_BUILT_APPS = [
@@ -163,6 +165,10 @@ AUTH_USER_MODEL = 'users.CustomUser'
 DJOSER = {
     'LOGIN_FIELD': 'email',
 }
+
+if ENVIRONMENT != 'local':
+    USE_X_FORWARDED_HOST = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
