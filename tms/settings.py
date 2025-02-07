@@ -29,6 +29,7 @@ THIRD_PARTY_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'corsheaders',
 ]
 
 LOCAL_APPS = [
@@ -50,6 +51,7 @@ MIDDLEWARE = [
     'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
     # 'commons.middleware.CustomRollbarNotifierMiddleware',
     "allauth.account.middleware.AccountMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'tms.urls'
@@ -138,6 +140,13 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=str, default='http://localhost').split(',')
+
+CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=str, default='http://localhost').split(',')
+CORS_ALLOWED_REGEXES =[
+    r'^http://localhost:',
+]
 
 # Email Settings
 EMAIL_HOST = config('EMAIL_HOST', cast=str, default='smtp.gmail.com')
