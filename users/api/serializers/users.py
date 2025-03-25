@@ -26,3 +26,10 @@ class UserMiniSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'first_name', 'last_name', 'email']
         ref_name = 'Users'
+
+
+class GoogleResponseSerializer(serializers.Serializer):
+    """
+    Serializer for Google Response
+    """
+    code = serializers.CharField(required=True, max_length=500)

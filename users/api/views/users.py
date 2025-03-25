@@ -12,7 +12,8 @@ from rest_framework.authtoken.models import Token
 from djoser.utils import login_user
 from djoser.serializers import TokenSerializer, TokenCreateSerializer
 
-from users.api.serializers.users import UserCreateSerializer, UserSerializer, UserMiniSerializer
+from users.api.serializers.users import UserCreateSerializer, UserSerializer, UserMiniSerializer, \
+    GoogleResponseSerializer
 from users.tasks import send_user_registration_email
 from users.utils import generate_random_string
 
@@ -54,6 +55,54 @@ class GoogleLoginView(APIView):
         code = request.query_params.get('code', None)
         if not code:
             return Response({'detail': 'Code is required'}, status=status.HTTP_400_BAD_REQUEST)
+        # Exchange Code for Token
+        url = 'https://oauth2.googleapis.com/token'
+        data = {
+            'code': code,
+            'client_id': settings.GOOGLE_CLIENT_ID,
+            'client_secret': settings.GOOGLE_CLIENT_SECRET,
+            'redirect_uri': settings.GOOGLE_REDIRECT_URI,
+            'grant_type': 'authorization_code',
+        }
+        response = requests.post(url, data=data)
+        if response.status_code != 200:
+            return Response({'detail': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
+        token = response.json().get('access_token')
+        url = 'https://www.googleapis.com/oauth2/v3/userinfo'
+        user_response = requests.get(url, headers={'Authorization': f'Bearer {token}'})
+        if user_response.status_code != 200:
+            return Response({'detail': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        user_data = user_response.json()
+        email = user_data.get('email', None)
+        if not email:
+            return Response({'detail': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        name = user_data.get('name', None)
+        family_name = user_data.get('family_name', None)
+        try:
+            user = User.objects.get(email=email)
+            user.first_name = user_data.get('given_name', '')
+            user.last_name = user_data.get('family_name', '')
+            user.save()
+        except User.DoesNotExist:
+            # create user
+            user = User.objects.create(email=email, first_name=name, last_name=family_name)
+        user_data = UserMiniSerializer(user).data
+        refresh = RefreshToken.for_user(user)
+        auth = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+        return Response({'user': user_data, 'auth': auth}, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Get code from Google and return user data
+        :param request:
+        :return:
+        """
+        serializer = GoogleResponseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        code = serializer.validated_data.get('code')
         # Exchange Code for Token
         url = 'https://oauth2.googleapis.com/token'
         data = {
