@@ -32,4 +32,4 @@ class GoogleResponseSerializer(serializers.Serializer):
     """
     Serializer for Google Response
     """
-    code = serializers.CharField(required=True, max_length=1000)
+    code = serializers.CharField(required=True)
