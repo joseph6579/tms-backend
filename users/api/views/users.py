@@ -114,6 +114,7 @@ class GoogleLoginView(APIView):
         }
         response = requests.post(url, data=data)
         if response.status_code != 200:
+            # print("The error is: ",response.json())
             return Response({'detail': 'Invalid code'}, status=status.HTTP_400_BAD_REQUEST)
         token = response.json().get('access_token')
         url = 'https://www.googleapis.com/oauth2/v3/userinfo'
