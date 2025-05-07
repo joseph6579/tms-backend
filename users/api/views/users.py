@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 from django.conf import settings
@@ -11,6 +13,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.authtoken.models import Token
 from djoser.utils import login_user
 from djoser.serializers import TokenSerializer, TokenCreateSerializer
+
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 from users.api.serializers.users import UserCreateSerializer, UserSerializer, UserMiniSerializer, \
     GoogleResponseSerializer
@@ -55,6 +60,19 @@ class GoogleLoginView(APIView):
         code = request.query_params.get('code', None)
         if not code:
             return Response({'detail': 'Code is required'}, status=status.HTTP_400_BAD_REQUEST)
+        # verify token
+        # try:
+        #     idi_nfo = id_token.verify_oauth2_token(
+        #         id_token=code,
+        #         request=google_requests.Request(),
+        #         audience=settings.GOOGLE_CLIENT_ID
+        #     )
+        # except (ValueError, Exception) as e:
+        #     print("Error: ", e)
+        #     return Response({'detail': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # print("idi_nfo: ", idi_nfo)
+        # return Response({'detail': 'Token is valid'}, status=status.HTTP_200_OK)
         # Exchange Code for Token
         url = 'https://oauth2.googleapis.com/token'
         data = {
@@ -94,7 +112,8 @@ class GoogleLoginView(APIView):
         }
         return Response({'user': user_data, 'auth': auth}, status=status.HTTP_200_OK)
 
-    def post(self, request, *args, **kwargs):
+    # this is the old implementation, requires an Authorization token, not ID token
+    def poster_boy(self, request, *args, **kwargs):
         """
         Get code from Google and return user data
         :param request:
@@ -142,3 +161,52 @@ class GoogleLoginView(APIView):
             'access': str(refresh.access_token),
         }
         return Response({'user': user_data, 'auth': auth}, status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Get code from Google and return user data
+        :param request:
+        :return:
+        """
+        serializer = GoogleResponseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        code = serializer.validated_data.get('code')
+        # verify token
+        try:
+            idi_nfo = id_token.verify_oauth2_token(code, google_requests.Request(), settings.GOOGLE_CLIENT_ID)
+        except (ValueError, Exception) as e:
+            print("Error: ", e)
+            return Response({'detail': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        if not idi_nfo:
+            return Response({'detail': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        if idi_nfo.get('aud') != settings.GOOGLE_CLIENT_ID:
+            return Response({'detail': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        if idi_nfo.get('iss') not in ['accounts.google.com', 'https://accounts.google.com']:
+            return Response({'detail': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        if idi_nfo.get('exp') < int(time.time()):
+            return Response({'detail': 'Token expired'}, status=status.HTTP_400_BAD_REQUEST)
+        if not idi_nfo.get('email_verified', False):
+            return Response({'detail': 'Email not verified'}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = idi_nfo.get('email', None)
+        name = idi_nfo.get('given_name', None)
+        family_name = idi_nfo.get('family_name', None)
+
+        try:
+            user = User.objects.get(email=email)
+            user.first_name = name
+            user.last_name = family_name
+            user.save()
+        except User.DoesNotExist:
+            user = User.objects.create(email=email, first_name=name, last_name=family_name)
+        user_data = UserMiniSerializer(user).data
+        refresh = RefreshToken.for_user(user)
+        auth = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+        return Response({'user': user_data, 'auth': auth}, status=status.HTTP_200_OK)
+
+
+    # @react-auth/google
+
