@@ -4,6 +4,7 @@ import requests
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -196,9 +197,12 @@ class GoogleLoginView(APIView):
             user = User.objects.get(email=email)
             user.first_name = name
             user.last_name = family_name
+            user.last_login = timezone.now()
             user.save()
         except User.DoesNotExist:
             user = User.objects.create(email=email, first_name=name, last_name=family_name)
+            user.last_login = timezone.now()
+            user.save()
         user_data = UserMiniSerializer(user).data
         refresh = RefreshToken.for_user(user)
         auth = {
