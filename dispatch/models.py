@@ -135,8 +135,11 @@ class TripStop(CommonInfo):
     Model to represent a stop in a trip.
     """
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='trip_stops')
     order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL)  # Null for depot stops
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='trip_stops', null=True, blank=True)
+    driver = models.ForeignKey(
+        'users.Driver', on_delete=models.SET_NULL, null=True, blank=True, related_name='trip_stops'
+    )
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
     stop_type = models.CharField(max_length=10, choices=STOP_TYPE_CHOICES, default='drop_off')
     sequence = models.PositiveIntegerField()
