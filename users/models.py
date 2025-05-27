@@ -19,7 +19,6 @@ DRIVER_STATUSES = (
     ('inactive', 'inactive'),
 )
 
-
 class CustomUser(AbstractUser):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     username = None
@@ -29,6 +28,7 @@ class CustomUser(AbstractUser):
     organisation = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, null=True, blank=True)
     role = models.CharField(choices=USER_ROLES, max_length=10, default='staff')
     is_master_user = models.BooleanField(default=False)
+    custom_role = models.ForeignKey('organisations.Role', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -37,22 +37,25 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
-    
 
+    def has_organisation_permission(self, permission_codename):
+        if self.is_master_user or self.role == 'admin':
+            return True
+        if self.custom_role:
+            return self.custom_role.permissions.filter(
+                codename=permission_codename,
+                organisation=self.organisation
+            ).exists()
+        return False
 
 class Driver(CustomUser):
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     status = models.CharField(max_length=10, default='active', choices=DRIVER_STATUSES)
 
     def __str__(self):
-        return f'{self.user.first_name} {self.user.last_name}'
+        return f'{self.first_name} {self.last_name}'
     
     class Meta:
         verbose_name_plural = 'Drivers'
         verbose_name = 'Driver'
         ordering = ['-id']
-
-
-
-
-

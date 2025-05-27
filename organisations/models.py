@@ -5,6 +5,45 @@ from django.core.validators import MinValueValidator
 
 from commons.behaviour import CommonInfo
 
+class Permission(CommonInfo):
+    """
+    Model to represent custom permissions for organizations
+    """
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    name = models.CharField(max_length=100)
+    codename = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    organisation = models.ForeignKey('Organisation', on_delete=models.CASCADE, related_name='permissions')
+
+    class Meta:
+        unique_together = [['organisation', 'codename']]
+        ordering = ['name']
+        verbose_name = 'Permission'
+        verbose_name_plural = 'Permissions'
+
+    def __str__(self):
+        return f"{self.name} ({self.organisation.name})"
+
+class Role(CommonInfo):
+    """
+    Model to represent custom roles for organizations
+    """
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    organisation = models.ForeignKey('Organisation', on_delete=models.CASCADE, related_name='roles')
+    permissions = models.ManyToManyField(Permission, related_name='roles')
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = [['organisation', 'name']]
+        ordering = ['name']
+        verbose_name = 'Role'
+        verbose_name_plural = 'Roles'
+
+    def __str__(self):
+        return f"{self.name} ({self.organisation.name})"
+
 class Package(CommonInfo):
     """
     Model to represent subscription packages available to organizations
