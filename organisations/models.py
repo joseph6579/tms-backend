@@ -141,6 +141,55 @@ class OrganisationPreferences(CommonInfo):
         verbose_name = 'Organisation Preferences'
         verbose_name_plural = 'Organisation Preferences'
 
+class DriverAppSettings(CommonInfo):
+    """
+    Model to store driver app settings per organisation
+    """
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    organisation = models.OneToOneField('Organisation', on_delete=models.CASCADE, related_name='driver_app_settings')
+    
+    # Cancellation settings
+    allow_pickup_cancellation = models.BooleanField(default=False, help_text="Allow drivers to cancel at pickup")
+    allow_dropoff_cancellation = models.BooleanField(default=False, help_text="Allow drivers to cancel at drop-off")
+    
+    # Delivery confirmation settings
+    require_confirmation_code = models.BooleanField(default=True, help_text="Require confirmation code for delivery")
+    require_recipient_name = models.BooleanField(default=True, help_text="Require recipient name for delivery")
+    require_recipient_signature = models.BooleanField(default=False, help_text="Require recipient signature for delivery")
+    require_delivery_photo = models.BooleanField(default=True, help_text="Require photo proof of delivery")
+    require_driver_notes = models.BooleanField(default=True, help_text="Require driver notes for delivery")
+    
+    # Photo settings
+    photo_quality = models.CharField(
+        max_length=20,
+        choices=[
+            ('low', 'Low'),
+            ('medium', 'Medium'),
+            ('high', 'High')
+        ],
+        default='medium',
+        help_text="Quality setting for delivery photos"
+    )
+    max_photo_size_mb = models.PositiveIntegerField(
+        default=5,
+        help_text="Maximum photo size in megabytes"
+    )
+    
+    # Additional settings
+    enable_route_optimization = models.BooleanField(default=True, help_text="Enable route optimization for drivers")
+    offline_mode_enabled = models.BooleanField(default=True, help_text="Allow offline mode in driver app")
+    max_offline_duration_hours = models.PositiveIntegerField(
+        default=24,
+        help_text="Maximum duration (in hours) for offline mode"
+    )
+
+    def __str__(self):
+        return f"Driver App Settings for {self.organisation.name}"
+
+    class Meta:
+        verbose_name = 'Driver App Settings'
+        verbose_name_plural = 'Driver App Settings'
+
 class Organisation(CommonInfo):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     name = models.CharField(max_length=255, unique=True)
