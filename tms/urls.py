@@ -36,8 +36,8 @@ urlpatterns = [
     path('api/<str:version>/social-accounts/', include('allauth.socialaccount.urls')),
     path('api/<str:version>/', include('users.urls')),
     path('api/<str:version>/', include('organisations.urls')),
+    path('api/<str:version>/', include('dispatch.urls')),
     path('api/<str:version>/gs-login/', GoogleLoginView.as_view(), name='google-login'),
-
 ]
 
 # Serve static and media files in development
