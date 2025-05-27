@@ -39,6 +39,7 @@ LOCAL_APPS = [
     'organisations',
     'users',
     'fleet',
+    'dispatch',
 ]
 
 INSTALLED_APPS = IN_BUILT_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -84,7 +85,8 @@ WSGI_APPLICATION = 'tms.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        # 'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME':  config('DB_NAME', cast=str),
         'USER': config('DB_USER', cast=str),
         'PASSWORD': config('DB_PASSWORD', cast=str),

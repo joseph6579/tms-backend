@@ -19,12 +19,13 @@ class LocationService:
         Update driver's location in Redis
         Returns True if successful, False otherwise
         """
+        import time
         try:
             key = f"{self.LOCATION_KEY_PREFIX}{driver_id}"
             location_data = {
                 "latitude": latitude,
                 "longitude": longitude,
-                "timestamp": import time; time.time()
+                "timestamp": time.time()
             }
             
             # Store location data with TTL
