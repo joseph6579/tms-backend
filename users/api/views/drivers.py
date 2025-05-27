@@ -4,14 +4,19 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
+from django.db.models import Sum, Count
+from datetime import datetime, timedelta
 import random
 
 from users.models import Driver
 from users.api.serializers.users import (
     DriverSerializer, DriverLocationUpdateSerializer,
-    PasswordChangeSerializer
+    PasswordChangeSerializer, DriverEarningsSerializer,
+    DeliveryHistorySerializer
 )
 from dispatch.services.location_service import LocationService
+from fleet.models import DriverPayment
+from dispatch.models import Order
 
 class DriverViewSet(viewsets.ModelViewSet):
     serializer_class = DriverSerializer
@@ -20,6 +25,114 @@ class DriverViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Driver.objects.filter(organisation=self.request.user.organisation)
+
+    @action(detail=True, methods=['get'])
+    def earnings(self, request, pk=None):
+        """Get driver's earnings for different time periods"""
+        driver = self.get_object()
+        period = request.query_params.get('period', 'week')  # week, month, year
+        date = request.query_params.get('date')  # Optional specific date
+
+        try:
+            if date:
+                date = datetime.strptime(date, '%Y-%m-%d').date()
+            else:
+                date = timezone.now().date()
+        except ValueError:
+            return Response(
+                {'detail': 'Invalid date format. Use YYYY-MM-DD'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Calculate date ranges
+        if period == 'week':
+            start_date = date - timedelta(days=date.weekday())
+            end_date = start_date + timedelta(days=6)
+        elif period == 'month':
+            start_date = date.replace(day=1)
+            next_month = date.replace(day=28) + timedelta(days=4)
+            end_date = next_month - timedelta(days=next_month.day)
+        elif period == 'year':
+            start_date = date.replace(month=1, day=1)
+            end_date = date.replace(month=12, day=31)
+        else:
+            return Response(
+                {'detail': 'Invalid period. Use week, month, or year'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get earnings data
+        earnings = DriverPayment.objects.filter(
+            driver=driver,
+            period_start__date__gte=start_date,
+            period_end__date__lte=end_date
+        ).aggregate(
+            total_earnings=Sum('total_amount'),
+            total_bonus=Sum('bonus_amount'),
+            total_deductions=Sum('deductions'),
+            payment_count=Count('id')
+        )
+
+        # Get completed deliveries count
+        completed_deliveries = Order.objects.filter(
+            driver=driver,
+            status='completed',
+            date_delivered__date__gte=start_date,
+            date_delivered__date__lte=end_date
+        ).count()
+
+        response_data = {
+            'period': period,
+            'start_date': start_date,
+            'end_date': end_date,
+            'total_earnings': earnings['total_earnings'] or 0,
+            'total_bonus': earnings['total_bonus'] or 0,
+            'total_deductions': earnings['total_deductions'] or 0,
+            'payment_count': earnings['payment_count'] or 0,
+            'completed_deliveries': completed_deliveries
+        }
+
+        serializer = DriverEarningsSerializer(response_data)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def delivery_history(self, request, pk=None):
+        """Get driver's delivery history"""
+        driver = self.get_object()
+        status_filter = request.query_params.get('status')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        orders = Order.objects.filter(driver=driver)
+
+        # Apply filters
+        if status_filter:
+            orders = orders.filter(status=status_filter)
+
+        try:
+            if start_date:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+                orders = orders.filter(created_at__date__gte=start_date)
+            if end_date:
+                end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+                orders = orders.filter(created_at__date__lte=end_date)
+        except ValueError:
+            return Response(
+                {'detail': 'Invalid date format. Use YYYY-MM-DD'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Order by most recent first
+        orders = orders.order_by('-created_at')
+
+        # Get page number from query params
+        page = self.paginate_queryset(orders)
+        if page is not None:
+            serializer = DeliveryHistorySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = DeliveryHistorySerializer(orders, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def activate(self, request, pk=None):
