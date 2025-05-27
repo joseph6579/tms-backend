@@ -1,6 +1,9 @@
 from django.contrib import admin
 
-from organisations.models import Organisation, Package, OrganisationSubscription, OrganisationPreferences, DriverAppSettings
+from organisations.models import (
+    Organisation, Package, OrganisationSubscription,
+    OrganisationPreferences, DriverAppSettings, Store
+)
 
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
@@ -65,6 +68,75 @@ class DriverAppSettingsAdmin(admin.ModelAdmin):
                 'enable_route_optimization',
                 'offline_mode_enabled',
                 'max_offline_duration_hours'
+            )
+        })
+    )
+
+@admin.register(Store)
+class StoreAdmin(admin.ModelAdmin):
+    list_display = [
+        'name',
+        'organisation',
+        'code',
+        'city',
+        'is_active',
+        'enable_auto_broadcast'
+    ]
+    list_filter = [
+        'is_active',
+        'enable_auto_broadcast',
+        'city',
+        'country'
+    ]
+    search_fields = [
+        'name',
+        'code',
+        'address',
+        'city',
+        'organisation__name'
+    ]
+    fieldsets = (
+        ('Basic Information', {
+            'fields': (
+                'organisation',
+                'name',
+                'code',
+                'is_active'
+            )
+        }),
+        ('Address', {
+            'fields': (
+                'address',
+                'city',
+                'state',
+                'country',
+                'postal_code'
+            )
+        }),
+        ('Contact Information', {
+            'fields': (
+                'contact_person',
+                'contact_phone',
+                'contact_email'
+            )
+        }),
+        ('Operating Hours', {
+            'fields': ('operating_hours',)
+        }),
+        ('Broadcast Settings', {
+            'fields': (
+                'enable_auto_broadcast',
+                'broadcast_radius_km',
+                'min_driver_rating',
+                'broadcast_batch_size',
+                'broadcast_interval_minutes',
+                'max_broadcast_attempts'
+            )
+        }),
+        ('Capacity Settings', {
+            'fields': (
+                'max_daily_orders',
+                'max_concurrent_orders'
             )
         })
     )

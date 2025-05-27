@@ -190,6 +190,84 @@ class DriverAppSettings(CommonInfo):
         verbose_name = 'Driver App Settings'
         verbose_name_plural = 'Driver App Settings'
 
+class Store(CommonInfo):
+    """
+    Model to represent organization stores/pickup locations with broadcast settings
+    """
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    organisation = models.ForeignKey('Organisation', on_delete=models.CASCADE, related_name='stores')
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=20, help_text="Unique store code")
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    contact_person = models.CharField(max_length=100)
+    contact_phone = models.CharField(max_length=20)
+    contact_email = models.EmailField()
+    is_active = models.BooleanField(default=True)
+    
+    # Operating hours
+    operating_hours = models.JSONField(
+        default=dict,
+        help_text="Operating hours for each day"
+    )
+    
+    # Broadcast settings
+    enable_auto_broadcast = models.BooleanField(
+        default=True,
+        help_text="Automatically broadcast orders from this store"
+    )
+    broadcast_radius_km = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=5.00,
+        help_text="Radius in kilometers for driver broadcasts"
+    )
+    min_driver_rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        default=4.00,
+        help_text="Minimum driver rating for broadcasts"
+    )
+    broadcast_batch_size = models.PositiveIntegerField(
+        default=5,
+        help_text="Maximum number of orders in a broadcast batch"
+    )
+    broadcast_interval_minutes = models.PositiveIntegerField(
+        default=5,
+        help_text="Time between broadcast attempts"
+    )
+    max_broadcast_attempts = models.PositiveIntegerField(
+        default=3,
+        help_text="Maximum number of broadcast attempts per order"
+    )
+    
+    # Capacity settings
+    max_daily_orders = models.PositiveIntegerField(
+        default=100,
+        help_text="Maximum number of orders per day"
+    )
+    max_concurrent_orders = models.PositiveIntegerField(
+        default=20,
+        help_text="Maximum number of concurrent orders"
+    )
+
+    def __str__(self):
+        return f"{self.name} - {self.organisation.name}"
+
+    class Meta:
+        verbose_name = 'Store'
+        verbose_name_plural = 'Stores'
+        unique_together = [['organisation', 'code']]
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['code']),
+            models.Index(fields=['city']),
+            models.Index(fields=['postal_code']),
+        ]
+
 class Organisation(CommonInfo):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     name = models.CharField(max_length=255, unique=True)
