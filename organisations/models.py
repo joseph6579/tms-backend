@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
+from django.contrib.gis.db import models as geomodels
 
 from commons.behaviour import CommonInfo
 
@@ -210,6 +211,40 @@ class Store(CommonInfo):
     contact_email = models.EmailField()
     is_active = models.BooleanField(default=True)
     
+    # Location
+    coordinates = geomodels.PointField(help_text="Store location coordinates")
+    
+    # Geofence settings
+    geofence_type = models.CharField(
+        max_length=10,
+        choices=[
+            ('none', 'None'),
+            ('soft', 'Soft'),
+            ('hard', 'Hard')
+        ],
+        default='none',
+        help_text="Type of geofence enforcement"
+    )
+    geofence_radius_km = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=1.00,
+        help_text="Geofence radius in kilometers"
+    )
+    geofence_polygon = geomodels.PolygonField(
+        null=True,
+        blank=True,
+        help_text="Custom geofence boundary"
+    )
+    allow_geofence_override = models.BooleanField(
+        default=False,
+        help_text="Allow authorized users to override geofence restrictions"
+    )
+    geofence_grace_period_minutes = models.PositiveIntegerField(
+        default=5,
+        help_text="Grace period for soft geofence violations"
+    )
+    
     # Operating hours
     operating_hours = models.JSONField(
         default=dict,
@@ -268,6 +303,7 @@ class Store(CommonInfo):
             models.Index(fields=['code']),
             models.Index(fields=['city']),
             models.Index(fields=['postal_code']),
+            geomodels.Index(fields=['coordinates']),
         ]
 
 class StoreDriverGroup(CommonInfo):

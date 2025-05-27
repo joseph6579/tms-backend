@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.gis.admin import OSMGeoAdmin
 
 from organisations.models import (
     Organisation, Package, OrganisationSubscription,
@@ -74,18 +75,20 @@ class DriverAppSettingsAdmin(admin.ModelAdmin):
     )
 
 @admin.register(Store)
-class StoreAdmin(admin.ModelAdmin):
+class StoreAdmin(OSMGeoAdmin):
     list_display = [
         'name',
         'organisation',
         'code',
         'city',
         'is_active',
-        'enable_auto_broadcast'
+        'enable_auto_broadcast',
+        'geofence_type'
     ]
     list_filter = [
         'is_active',
         'enable_auto_broadcast',
+        'geofence_type',
         'city',
         'country'
     ]
@@ -105,13 +108,23 @@ class StoreAdmin(admin.ModelAdmin):
                 'is_active'
             )
         }),
-        ('Address', {
+        ('Location', {
             'fields': (
+                'coordinates',
                 'address',
                 'city',
                 'state',
                 'country',
                 'postal_code'
+            )
+        }),
+        ('Geofence Settings', {
+            'fields': (
+                'geofence_type',
+                'geofence_radius_km',
+                'geofence_polygon',
+                'allow_geofence_override',
+                'geofence_grace_period_minutes'
             )
         }),
         ('Contact Information', {
