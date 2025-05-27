@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from dispatch.models import Trip, TripStop, Order, Location
 from fleet.models import Vehicle
+from users.models import Driver
 
 class TripService:
     @staticmethod
@@ -47,7 +48,11 @@ class TripService:
         }
 
     @staticmethod
-    def create_trip_from_optimization(optimization_result: dict, orders: List[Order]) -> Optional[Trip]:
+    def create_trip_from_optimization(
+        optimization_result: dict,
+        orders: List[Order],
+        driver: Optional[Driver] = None
+    ) -> Optional[Trip]:
         """Create a trip from optimization engine result"""
         if not optimization_result:
             return None
@@ -77,6 +82,7 @@ class TripService:
             # Create trip
             trip = Trip.objects.create(
                 vehicle_id=vehicle_id,
+                driver=driver,
                 start_location=start_location,
                 end_location=end_location,
                 scheduled_start_time=timezone.now(),
@@ -107,14 +113,21 @@ class TripService:
                     eta=timezone.now(),  # Should be calculated based on travel_time
                 )
 
-            # Update orders with trip
+            # Update orders with trip and driver
             order_ids = set(step['shipment_id'] for step in steps if step['shipment_id'])
-            Order.objects.filter(id__in=order_ids).update(trip=trip)
+            Order.objects.filter(id__in=order_ids).update(
+                trip=trip,
+                driver=driver if driver else None
+            )
 
             return trip
 
     @staticmethod
-    def create_simple_trip(orders: List[Order], vehicle: Optional[Vehicle] = None) -> Optional[Trip]:
+    def create_simple_trip(
+        orders: List[Order],
+        vehicle: Optional[Vehicle] = None,
+        driver: Optional[Driver] = None
+    ) -> Optional[Trip]:
         """Create a simple trip without optimization"""
         if not orders:
             return None
@@ -126,6 +139,7 @@ class TripService:
         # Create trip
         trip = Trip.objects.create(
             vehicle=vehicle,
+            driver=driver,
             start_location=start_location,
             end_location=end_location,
             scheduled_start_time=timezone.now()
@@ -154,7 +168,59 @@ class TripService:
             )
             sequence += 1
 
-        # Update orders with trip
-        Order.objects.filter(id__in=[order.id for order in orders]).update(trip=trip)
+        # Update orders with trip and driver
+        Order.objects.filter(id__in=[order.id for order in orders]).update(
+            trip=trip,
+            driver=driver if driver else None
+        )
 
         return trip
+
+    @staticmethod
+    def add_order_to_trip(order: Order, trip: Trip) -> None:
+        """Add a new order to an existing trip"""
+        # Get the highest sequence number
+        last_sequence = trip.stops.order_by('-sequence').first().sequence
+
+        # Create pickup stop
+        TripStop.objects.create(
+            trip=trip,
+            order=order,
+            location=order.pickup,
+            stop_type='pickup',
+            sequence=last_sequence + 1
+        )
+
+        # Create dropoff stop
+        TripStop.objects.create(
+            trip=trip,
+            order=order,
+            location=order.drop_off,
+            stop_type='drop_off',
+            sequence=last_sequence + 2
+        )
+
+        # Update trip end location
+        trip.end_location = order.drop_off
+        trip.save()
+
+    @staticmethod
+    def remove_order_from_trip(order: Order) -> None:
+        """Remove an order from its current trip"""
+        if not order.trip:
+            return
+
+        # Delete the order's stops
+        order.trip.stops.filter(order=order).delete()
+
+        # Update trip end location if this was the last order
+        trip = order.trip
+        last_stop = trip.stops.order_by('-sequence').first()
+        if last_stop:
+            trip.end_location = last_stop.location
+            trip.save()
+
+        # Remove trip association
+        order.trip = None
+        order.driver = None
+        order.save()
