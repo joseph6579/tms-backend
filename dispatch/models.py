@@ -233,3 +233,33 @@ class TripStop(CommonInfo):
             models.Index(fields=['trip', 'sequence']),
             models.Index(fields=['status']),
         ]
+
+class OrderReview(CommonInfo):
+    """
+    Model to store order reviews and ratings
+    """
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='reviews')
+    driver = models.ForeignKey('users.Driver', on_delete=models.CASCADE, related_name='order_reviews')
+    rating = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text='Rating from 1 to 5'
+    )
+    driver_rating = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text='Driver rating from 1 to 5'
+    )
+    comments = models.TextField(blank=True, null=True)
+    reviewed_by = models.ForeignKey('users.CustomUser', on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"Review for Order {self.order.reference}"
+
+    class Meta:
+        verbose_name = 'Order Review'
+        verbose_name_plural = 'Order Reviews'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['rating']),
+            models.Index(fields=['driver_rating']),
+        ]

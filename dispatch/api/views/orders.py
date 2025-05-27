@@ -1,4 +1,45 @@
-# Add to existing OrderViewSet class:
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.utils import timezone
+
+from dispatch.models import Order, OrderReview
+from dispatch.api.serializers.orders import OrderSerializer, OrderReviewSerializer
+from dispatch.services.broadcast_service import BroadcastService
+
+class OrderViewSet(viewsets.ModelViewSet):
+    serializer_class = OrderSerializer
+    
+    def get_queryset(self):
+        return Order.objects.filter(organization=self.request.user.organisation)
+
+    @action(detail=True, methods=['post'])
+    def review(self, request, pk=None):
+        """Add a review for the order"""
+        order = self.get_object()
+        
+        # Check if order is completed
+        if order.status != 'completed':
+            return Response(
+                {'detail': 'Can only review completed orders'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Check if order already has a review
+        if OrderReview.objects.filter(order=order).exists():
+            return Response(
+                {'detail': 'Order already has a review'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = OrderReviewSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(order=order, driver=order.driver)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['post'])
     def broadcast(self, request):
