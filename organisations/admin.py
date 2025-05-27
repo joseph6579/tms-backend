@@ -2,7 +2,8 @@ from django.contrib import admin
 
 from organisations.models import (
     Organisation, Package, OrganisationSubscription,
-    OrganisationPreferences, DriverAppSettings, Store
+    OrganisationPreferences, DriverAppSettings, Store,
+    StoreDriverGroup
 )
 
 @admin.register(Package)
@@ -140,3 +141,45 @@ class StoreAdmin(admin.ModelAdmin):
             )
         })
     )
+
+@admin.register(StoreDriverGroup)
+class StoreDriverGroupAdmin(admin.ModelAdmin):
+    list_display = [
+        'store',
+        'driver_group',
+        'priority',
+        'max_delivery_distance_km',
+        'max_orders_per_trip',
+        'is_active'
+    ]
+    list_filter = [
+        'is_active',
+        'priority',
+        'store__city'
+    ]
+    search_fields = [
+        'store__name',
+        'driver_group__name'
+    ]
+    fieldsets = (
+        ('Basic Information', {
+            'fields': (
+                'store',
+                'driver_group',
+                'is_active'
+            )
+        }),
+        ('Priority Settings', {
+            'fields': ('priority',)
+        }),
+        ('Delivery Limits', {
+            'fields': (
+                'max_delivery_distance_km',
+                'max_orders_per_trip'
+            )
+        }),
+        ('Additional Settings', {
+            'fields': ('custom_broadcast_settings',)
+        })
+    )
+    ordering = ['store', 'priority']

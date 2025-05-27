@@ -1,7 +1,9 @@
 import uuid
 
+from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.translation import gettext_lazy as _
 
 from commons.behaviour import CommonInfo
 
@@ -266,6 +268,50 @@ class Store(CommonInfo):
             models.Index(fields=['code']),
             models.Index(fields=['city']),
             models.Index(fields=['postal_code']),
+        ]
+
+class StoreDriverGroup(CommonInfo):
+    """
+    Model to associate driver groups with stores and their specific settings
+    """
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='driver_groups')
+    driver_group = models.ForeignKey('fleet.DriverGroup', on_delete=models.CASCADE, related_name='store_assignments')
+    
+    # Priority settings
+    priority = models.PositiveIntegerField(
+        default=1,
+        help_text="Broadcast priority (1 is highest)"
+    )
+    
+    # Distance and order limits
+    max_delivery_distance_km = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        help_text="Maximum delivery distance in kilometers"
+    )
+    max_orders_per_trip = models.PositiveIntegerField(
+        help_text="Maximum number of orders per trip"
+    )
+    
+    # Additional settings
+    is_active = models.BooleanField(default=True)
+    custom_broadcast_settings = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Custom broadcast settings for this group"
+    )
+
+    def __str__(self):
+        return f"{self.store.name} - {self.driver_group.name}"
+
+    class Meta:
+        verbose_name = 'Store Driver Group'
+        verbose_name_plural = 'Store Driver Groups'
+        unique_together = [['store', 'driver_group']]
+        ordering = ['store', 'priority']
+        indexes = [
+            models.Index(fields=['priority']),
         ]
 
 class Organisation(CommonInfo):
