@@ -214,7 +214,7 @@ class Store(CommonInfo):
     # Location
     coordinates = geomodels.PointField(help_text="Store location coordinates")
     
-    # Geofence settings
+    # Pickup Geofence settings
     geofence_type = models.CharField(
         max_length=10,
         choices=[
@@ -223,19 +223,44 @@ class Store(CommonInfo):
             ('hard', 'Hard')
         ],
         default='none',
-        help_text="Type of geofence enforcement"
+        help_text="Type of geofence enforcement for pickup"
     )
     geofence_radius_km = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=1.00,
-        help_text="Geofence radius in kilometers"
+        help_text="Pickup geofence radius in kilometers"
     )
     geofence_polygon = geomodels.PolygonField(
         null=True,
         blank=True,
-        help_text="Custom geofence boundary"
+        help_text="Custom pickup geofence boundary"
     )
+    
+    # Drop-off Geofence settings
+    dropoff_geofence_type = models.CharField(
+        max_length=10,
+        choices=[
+            ('none', 'None'),
+            ('soft', 'Soft'),
+            ('hard', 'Hard')
+        ],
+        default='none',
+        help_text="Type of geofence enforcement for drop-offs"
+    )
+    dropoff_geofence_radius_km = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=5.00,
+        help_text="Drop-off geofence radius in kilometers"
+    )
+    dropoff_geofence_polygon = geomodels.PolygonField(
+        null=True,
+        blank=True,
+        help_text="Custom drop-off geofence boundary"
+    )
+    
+    # Common Geofence settings
     allow_geofence_override = models.BooleanField(
         default=False,
         help_text="Allow authorized users to override geofence restrictions"
