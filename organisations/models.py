@@ -10,6 +10,7 @@ class Organisation(CommonInfo):
     name = models.CharField(max_length=255, unique=True)
     phone_number = models.CharField(max_length=15)
     email = models.EmailField(unique=True)
+    has_route_optimization = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
