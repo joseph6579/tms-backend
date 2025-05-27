@@ -16,11 +16,69 @@ PAYMENT_MODEL_TYPES = (
     ('hybrid', 'Hybrid'),
 )
 
+class DriverGroup(CommonInfo):
+    """Model to group drivers with similar payment terms"""
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    organisation = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='driver_groups')
+    payment_model = models.ForeignKey('PaymentModel', on_delete=models.PROTECT, related_name='driver_groups')
+    is_active = models.BooleanField(default=True)
+    
+    # Group-specific overrides for payment model
+    payment_overrides = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Group-specific overrides for payment model settings"
+    )
+    
+    # Qualification criteria
+    minimum_rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+        help_text="Minimum rating required for this group"
+    )
+    minimum_completed_trips = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Minimum number of completed trips required"
+    )
+    vehicle_requirements = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Vehicle requirements for this group"
+    )
+
+    def __str__(self):
+        return f"{self.name} ({self.organisation.name})"
+
+    class Meta:
+        verbose_name = 'Driver Group'
+        verbose_name_plural = 'Driver Groups'
+        unique_together = ['organisation', 'name']
+        ordering = ['name']
+
 class Vehicle(CommonInfo):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     registration_number = models.CharField(max_length=20, unique=True)
     driver = models.OneToOneField('users.Driver', on_delete=models.CASCADE, null=True, blank=True, related_name='vehicle')
     source = models.CharField(max_length=11, choices=VEHICLE_SOURCES, default='in_house')
+    vehicle_type = models.CharField(max_length=50, default='standard')
+    capacity = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Capacity in kg"
+    )
+    specifications = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Vehicle specifications"
+    )
 
     def __str__(self):
         return self.registration_number
@@ -108,6 +166,7 @@ class DriverPayment(CommonInfo):
     """Model to track driver payments"""
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     driver = models.ForeignKey('users.Driver', on_delete=models.CASCADE, related_name='payments')
+    driver_group = models.ForeignKey(DriverGroup, on_delete=models.PROTECT, related_name='payments')
     payment_model = models.ForeignKey(PaymentModel, on_delete=models.PROTECT)
     period_start = models.DateTimeField()
     period_end = models.DateTimeField()
@@ -128,6 +187,11 @@ class DriverPayment(CommonInfo):
     payment_date = models.DateTimeField(null=True, blank=True)
     payment_reference = models.CharField(max_length=100, null=True, blank=True)
     notes = models.TextField(blank=True)
+    payment_details = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Detailed breakdown of payment calculation"
+    )
 
     def __str__(self):
         return f"Payment for {self.driver} - {self.period_start.date()} to {self.period_end.date()}"

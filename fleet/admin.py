@@ -1,11 +1,20 @@
 from django.contrib import admin
-from fleet.models import Vehicle, PaymentModel, DriverPayment, PaymentDeduction, VehicleAssignmentLogs
+from fleet.models import (
+    Vehicle, PaymentModel, DriverPayment, PaymentDeduction,
+    VehicleAssignmentLogs, DriverGroup
+)
+
+@admin.register(DriverGroup)
+class DriverGroupAdmin(admin.ModelAdmin):
+    list_display = ['name', 'organisation', 'payment_model', 'is_active', 'minimum_rating']
+    list_filter = ['is_active', 'organisation']
+    search_fields = ['name', 'description']
 
 @admin.register(Vehicle)
 class VehicleAdmin(admin.ModelAdmin):
-    list_display = ['registration_number', 'driver', 'source']
+    list_display = ['registration_number', 'driver', 'source', 'vehicle_type']
     search_fields = ['registration_number']
-    list_filter = ['source']
+    list_filter = ['source', 'vehicle_type']
 
 @admin.register(PaymentModel)
 class PaymentModelAdmin(admin.ModelAdmin):
@@ -15,8 +24,8 @@ class PaymentModelAdmin(admin.ModelAdmin):
 
 @admin.register(DriverPayment)
 class DriverPaymentAdmin(admin.ModelAdmin):
-    list_display = ['driver', 'period_start', 'period_end', 'total_amount', 'status']
-    list_filter = ['status']
+    list_display = ['driver', 'driver_group', 'period_start', 'period_end', 'total_amount', 'status']
+    list_filter = ['status', 'driver_group']
     search_fields = ['driver__email', 'payment_reference']
     date_hierarchy = 'period_start'
 
