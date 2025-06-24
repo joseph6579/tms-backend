@@ -6,6 +6,7 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework.documentation import include_docs_urls
+from debug_toolbar.toolbar import debug_toolbar_urls
 
 from users.api.views.users import GoogleLoginView
 
@@ -37,9 +38,17 @@ urlpatterns = [
     path('api/<str:version>/', include('users.urls')),
     path('api/<str:version>/', include('organisations.urls')),
     path('api/<str:version>/', include('dispatch.urls')),
+    path('api/<str:version>/fleet/', include('fleet.urls')),
     path('api/<str:version>/gs-login/', GoogleLoginView.as_view(), name='google-login'),
 ]
 
 # Serve static and media files in development
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+if settings.DEBUG:
+    import debug_toolbar
+
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]
