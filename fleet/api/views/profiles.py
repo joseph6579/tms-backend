@@ -3,12 +3,23 @@ from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.response import Response
 
+from fleet.api.filters.profiles import DriverProfileFilter
 from fleet.api.serializers.profiles import DriverProfileListSerializer, ProfileActionSerializer
 from fleet.models import DriverGroup, DriverProfile, DriverProfileLogs
 
 
 class DriverManagement(ReadOnlyModelViewSet):
     serializer_class = DriverProfileListSerializer
+    search_fields = [
+        'first_name',
+        'last_name',
+        'driver__phone_number',
+        'vehicle__registration_number',
+        'driver__email',
+        'national_id',
+    ]
+    ordering_fields = ['created_at']
+    filterset_class = DriverProfileFilter
 
     def get_queryset(self):
         user = self.request.user
