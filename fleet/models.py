@@ -45,9 +45,7 @@ class DriverGroup(CommonInfo):
         on_delete=models.CASCADE,
         related_name="driver_groups",
     )
-    payment_model = models.ForeignKey(
-        "PaymentModel", on_delete=models.PROTECT, related_name="driver_groups"
-    )
+    payment_model = models.ForeignKey("PaymentModel", on_delete=models.PROTECT, related_name="driver_groups")
     is_active = models.BooleanField(default=True)
 
     # Group-specific overrides for payment model
@@ -69,9 +67,7 @@ class DriverGroup(CommonInfo):
     minimum_completed_trips = models.PositiveIntegerField(
         null=True, blank=True, help_text="Minimum number of completed trips required"
     )
-    vehicle_requirements = models.JSONField(
-        null=True, blank=True, help_text="Vehicle requirements for this group"
-    )
+    vehicle_requirements = models.JSONField(null=True, blank=True, help_text="Vehicle requirements for this group")
 
     def __str__(self):
         return f"{self.name} ({self.organisation.name})"
@@ -85,16 +81,10 @@ class DriverGroup(CommonInfo):
 
 class Vehicle(CommonInfo):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
-    organisation = models.ForeignKey(
-        "organisations.Organisation", related_name="vehicles", on_delete=models.CASCADE
-    )
+    organisation = models.ForeignKey("organisations.Organisation", related_name="vehicles", on_delete=models.CASCADE)
     registration_number = models.CharField(max_length=20, unique=True)
-    source = models.CharField(
-        max_length=11, choices=VEHICLE_SOURCES, default="in_house"
-    )
-    vehicle_type = models.CharField(
-        max_length=10, default="motorcycle", choices=VEHICLE_TYPES
-    )
+    source = models.CharField(max_length=11, choices=VEHICLE_SOURCES, default="in_house")
+    vehicle_type = models.CharField(max_length=10, default="motorcycle", choices=VEHICLE_TYPES)
     capacity = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -102,9 +92,7 @@ class Vehicle(CommonInfo):
         blank=True,
         help_text="Capacity in kg",
     )
-    specifications = models.JSONField(
-        null=True, blank=True, help_text="Vehicle specifications"
-    )
+    specifications = models.JSONField(null=True, blank=True, help_text="Vehicle specifications")
 
     def __str__(self):
         return self.registration_number
@@ -112,17 +100,13 @@ class Vehicle(CommonInfo):
 
 class DriverProfile(CommonInfo):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
-    driver = models.ForeignKey(
-        "users.Driver", related_name="profiles", on_delete=models.CASCADE
-    )
+    driver = models.ForeignKey("users.Driver", related_name="profiles", on_delete=models.CASCADE)
     organisation = models.ForeignKey(
         "organisations.Organisation",
         related_name="driver_profiles",
         on_delete=models.CASCADE,
     )
-    vehicle = models.ForeignKey(
-        Vehicle, related_name="driver_profile", on_delete=models.CASCADE
-    )
+    vehicle = models.ForeignKey(Vehicle, related_name="driver_profile", on_delete=models.CASCADE)
     driver_group = models.ForeignKey(
         DriverGroup,
         related_name="drivers",
@@ -133,9 +117,7 @@ class DriverProfile(CommonInfo):
     first_name = models.CharField(max_length=50, db_index=True)
     last_name = models.CharField(max_length=50, db_index=True)
     active = models.BooleanField(default=True)
-    status = models.CharField(
-        choices=DRIVER_STATUSES, default="available", db_index=True
-    )
+    status = models.CharField(choices=DRIVER_STATUSES, default="available", db_index=True)
     national_id = models.CharField(max_length=50)
 
     def __str__(self):
@@ -145,12 +127,8 @@ class DriverProfile(CommonInfo):
         verbose_name = "Driver Profile"
         verbose_name_plural = "Driver Profiles"
         constraints = [
-            models.UniqueConstraint(
-                fields=["driver", "organisation"], name="unique_driver_organisation"
-            ),
-            models.UniqueConstraint(
-                fields=["driver", "vehicle"], name="unique_driver_vehicle"
-            ),
+            models.UniqueConstraint(fields=["driver", "organisation"], name="unique_driver_organisation"),
+            models.UniqueConstraint(fields=["driver", "vehicle"], name="unique_driver_vehicle"),
             models.UniqueConstraint(
                 fields=["national_id", "organisation"],
                 name="unique_national_id_organisation",
@@ -217,19 +195,13 @@ class PaymentModel(CommonInfo):
         blank=True,
         help_text="Rate per hour",
     )
-    minimum_hours = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Minimum billable hours"
-    )
+    minimum_hours = models.PositiveIntegerField(null=True, blank=True, help_text="Minimum billable hours")
 
     # Hybrid Settings
-    hybrid_config = models.JSONField(
-        null=True, blank=True, help_text="Configuration for hybrid payment model"
-    )
+    hybrid_config = models.JSONField(null=True, blank=True, help_text="Configuration for hybrid payment model")
 
     # Bonus Settings
-    bonus_rules = models.JSONField(
-        null=True, blank=True, help_text="Rules for performance bonuses"
-    )
+    bonus_rules = models.JSONField(null=True, blank=True, help_text="Rules for performance bonuses")
 
     def __str__(self):
         return f"{self.name} - {self.get_model_type_display()}"
@@ -244,12 +216,8 @@ class DriverPayment(CommonInfo):
     """Model to track driver payments"""
 
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
-    driver = models.ForeignKey(
-        "users.Driver", on_delete=models.CASCADE, related_name="payments"
-    )
-    driver_group = models.ForeignKey(
-        DriverGroup, on_delete=models.PROTECT, related_name="payments"
-    )
+    driver = models.ForeignKey("users.Driver", on_delete=models.CASCADE, related_name="payments")
+    driver_group = models.ForeignKey(DriverGroup, on_delete=models.PROTECT, related_name="payments")
     payment_model = models.ForeignKey(PaymentModel, on_delete=models.PROTECT)
     period_start = models.DateTimeField()
     period_end = models.DateTimeField()
@@ -270,9 +238,7 @@ class DriverPayment(CommonInfo):
     payment_date = models.DateTimeField(null=True, blank=True)
     payment_reference = models.CharField(max_length=100, null=True, blank=True)
     notes = models.TextField(blank=True)
-    payment_details = models.JSONField(
-        null=True, blank=True, help_text="Detailed breakdown of payment calculation"
-    )
+    payment_details = models.JSONField(null=True, blank=True, help_text="Detailed breakdown of payment calculation")
 
     def __str__(self):
         return f"Payment for {self.driver} - {self.period_start.date()} to {self.period_end.date()}"
@@ -287,9 +253,7 @@ class PaymentDeduction(CommonInfo):
     """Model to track deductions from driver payments"""
 
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
-    payment = models.ForeignKey(
-        DriverPayment, on_delete=models.CASCADE, related_name="deduction_records"
-    )
+    payment = models.ForeignKey(DriverPayment, on_delete=models.CASCADE, related_name="deduction_records")
     description = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     deduction_type = models.CharField(
@@ -313,9 +277,7 @@ class PaymentDeduction(CommonInfo):
 class VehicleAssignmentLogs(CommonInfo):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     vehicle = models.ForeignKey("fleet.Vehicle", on_delete=models.CASCADE)
-    driver = models.ForeignKey(
-        "users.Driver", on_delete=models.CASCADE, related_name="vehicle_assignments"
-    )
+    driver = models.ForeignKey("users.Driver", on_delete=models.CASCADE, related_name="vehicle_assignments")
     assigned_by = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.CASCADE,
@@ -325,3 +287,18 @@ class VehicleAssignmentLogs(CommonInfo):
     class Meta:
         verbose_name = "Vehicle Assignment Log"
         verbose_name_plural = "Vehicle Assignment Logs"
+
+
+class DriverProfileLogs(CommonInfo):
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    profile = models.ForeignKey(DriverProfile, related_name='action_logs', on_delete=models.CASCADE)
+    user = models.ForeignKey('users.CustomUser', related_name='driver_profile_logs', on_delete=models.DO_NOTHING)
+    action = models.TextField()
+    reason = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.profile} Log'
+
+    class Meta:
+        verbose_name = 'Driver Profile Log'
+        verbose_name_plural = 'Driver Profile Logs'

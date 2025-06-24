@@ -6,7 +6,7 @@ from users.models import Driver
 class DriverMinimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Driver
-        fields = ['id', 'email', 'is_active']
+        fields = ['id', 'email', 'is_active', 'last_login']
         ref_name = 'profiles'
 
 
@@ -43,3 +43,7 @@ class DriverProfileListSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         ref_name = 'profiles'
+
+
+class ProfileActionSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=1000, required=False, allow_null=True)
