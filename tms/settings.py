@@ -33,6 +33,7 @@ THIRD_PARTY_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'corsheaders',
+    "debug_toolbar",
 ]
 
 LOCAL_APPS = [
@@ -56,6 +57,7 @@ MIDDLEWARE = [
     # 'commons.middleware.CustomRollbarNotifierMiddleware',
     "allauth.account.middleware.AccountMiddleware",
     'corsheaders.middleware.CorsMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = 'tms.urls'
@@ -87,7 +89,7 @@ DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.postgresql',
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME':  config('DB_NAME', cast=str),
+        'NAME': config('DB_NAME', cast=str),
         'USER': config('DB_USER', cast=str),
         'PASSWORD': config('DB_PASSWORD', cast=str),
         'HOST': config('DB_HOST', cast=str),
@@ -149,9 +151,12 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=str, default='http://
 CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=str, default='http://localhost').split(',')
-CORS_ALLOWED_REGEXES =[
+CORS_ALLOWED_REGEXES = [
     r'^http://localhost:',
 ]
+INTERNAL_IPS = [
+    '127.0.0.1',
+] + CORS_ALLOWED_ORIGINS  # debug toolbar
 
 # Email Settings
 EMAIL_HOST = config('EMAIL_HOST', cast=str, default='smtp.gmail.com')
@@ -269,7 +274,7 @@ SOCIALACCOUNT_PROVIDERS = {
             'client_id': GOOGLE_CLIENT_ID,
             'secret': GOOGLE_CLIENT_SECRET,
             'key': GOOGLE_API_KEY,
-        }
+        },
     }
 }
 

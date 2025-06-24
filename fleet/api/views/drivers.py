@@ -1,17 +1,38 @@
+from datetime import timedelta, datetime
+from random import random
+
+from django.contrib.auth.hashers import make_password
+from django.core.cache import cache
+from django.db import transaction
+from django.db.models import Sum, Count
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
+from dispatch.models import Order
 from dispatch.services.location_service import LocationService
-from fleet.api.serializers.drivers import DriverRegistrationSerializer
+from fleet.api.serializers.drivers import (
+    DriverRegistrationSerializer,
+    DriverEarningsSerializer,
+    DeliveryHistorySerializer,
+    PasswordChangeSerializer,
+    DriverLocationUpdateSerializer,
+)
+from fleet.models import DriverProfile, Vehicle, DriverPayment
 from users.models import Driver
-from fleet.models import DriverProfile, DriverGroup, Vehicle
-from rest_framework import status
-from rest_framework.response import Response
-from django.db import transaction
-from rest_framework.decorators import action
+from users.utils import get_driver_by_email, get_driver_by_phone, generate_code
+
+
+"""
+# TODO: Total Rider Earnings
+"""
 
 
 class DriverReadOnlyViewset(ReadOnlyModelViewSet):
     queryset = Driver.objects.all()
+    serializer_class = DriverRegistrationSerializer
     location_service = LocationService()
 
     @transaction.atomic
@@ -57,6 +78,7 @@ class DriverReadOnlyViewset(ReadOnlyModelViewSet):
         # create vehicle
         vehicle = Vehicle.objects.create(
             registration_number=registration_number,
+            capacity=vehicle_capacity,
             vehicle_type=vehicle_type,
             source=vehicle_source,
             organisation_id=organisation_id,
@@ -71,6 +93,7 @@ class DriverReadOnlyViewset(ReadOnlyModelViewSet):
             driver_group=driver_group,
             first_name=first_name,
             last_name=last_name,
+            national_id=national_id,
         )
         # TODO: Send Welcome Email/Text
         return Response({"detail": "success"}, status=status.HTTP_200_OK)
