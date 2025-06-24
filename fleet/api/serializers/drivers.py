@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+
+from dispatch.models import Location, Order
 from users.models import Driver
 from fleet.models import (
     Vehicle,
@@ -25,7 +27,6 @@ class DriverRegistrationSerializer(serializers.ModelSerializer):
         queryset=DriverGroup.objects.all(),
         required=False,
         allow_null=True,
-        allow_empty=True,
     )
 
     class Meta:
@@ -47,7 +48,15 @@ class DriverRegistrationSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         return user.organisation if user else None
 
+    def validate_first_name(self, value):
+        return ''.join(value.split()).lower()
+
+    def validate_last_name(self, value):
+        return ''.join(value.split()).lower()
+
     def validate_driver_group(self, value):
+        if value is None:
+            return value
         organisation = self._get_organisation()
         if (
             not DriverGroup.objects.only("id", "organisation_id")
@@ -58,27 +67,25 @@ class DriverRegistrationSerializer(serializers.ModelSerializer):
         return value
 
     def validate_vehicle_registration_number(self, value):
-        value = value.strip("").lower()
+        value = ''.join(value.split()).lower()
         organisation = self._get_organisation()
         if (
             Vehicle.objects.only("registration_number", "organisation_id")
             .filter(registration_number=value, organisation_id=organisation.id)
             .exists()
         ):
-            return serializers.ValidationError(_("registration number already exists"))
+            raise serializers.ValidationError(_("registration number already exists"))
         return value
 
     def validate_national_id(self, value):
-        value = value.strip("").lower()
+        value = value.strip().lower()
         organisation = self._get_organisation()
         if (
             DriverProfile.objects.only("id", "national_id", "organisation_id")
             .filter(national_id=value, organisation_id=organisation.id)
             .exists()
         ):
-            raise serializers.ValidationError(
-                _("driver with this national ID already exists")
-            )
+            raise serializers.ValidationError(_("driver with this national ID already exists"))
         return value
 
     def validate_email(self, value):
@@ -88,7 +95,7 @@ class DriverRegistrationSerializer(serializers.ModelSerializer):
         :param value:
         :return:
         """
-        value = value.strip("").lower()
+        value = value.lower()
         organisation = self._get_organisation()
         user = get_user_model()
         if (
@@ -113,19 +120,60 @@ class DriverRegistrationSerializer(serializers.ModelSerializer):
         :param value:
         :return:
         """
-        value = value.strip("").lower()
+        value = ''.join(value.split())
         organisation = self._get_organisation()
-        if (
-            driver := Driver.objects.only("id", "phone_number")
-            .filter(phone_number=value)
-            .first()
-        ):
+        if driver := Driver.objects.only("id", "phone_number").filter(phone_number=value).first():
             if (
                 DriverProfile.objects.only("id", "driver_id", "organisation_id")
                 .filter(driver_id=driver.id, organisation_id=organisation)
                 .exists()
             ):
-                raise serializers.ValidationError(
-                    _("driver with this phone number exists")
-                )
+                raise serializers.ValidationError(_("driver with this phone number exists"))
         return value
+
+
+class DriverLocationUpdateSerializer(serializers.Serializer):
+    latitude = serializers.FloatField(min_value=-90, max_value=90)
+    longitude = serializers.FloatField(min_value=-180, max_value=180)
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=8)
+
+
+class LocationMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = ['id', 'name', 'address', 'city']
+
+
+class DeliveryHistorySerializer(serializers.ModelSerializer):
+    pickup_details = LocationMiniSerializer(source='pickup', read_only=True)
+    drop_off_details = LocationMiniSerializer(source='drop_off', read_only=True)
+    earnings = serializers.DecimalField(max_digits=10, decimal_places=2, source='payment_amount', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'reference',
+            'status',
+            'pickup_details',
+            'drop_off_details',
+            'created_at',
+            'date_delivered',
+            'earnings',
+            'description',
+        ]
+
+
+class DriverEarningsSerializer(serializers.Serializer):
+    period = serializers.CharField()
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
+    total_earnings = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_bonus = serializers.DecimalField(max_digits=10, decimal_places=2)
+    total_deductions = serializers.DecimalField(max_digits=10, decimal_places=2)
+    payment_count = serializers.IntegerField()
+    completed_deliveries = serializers.IntegerField()

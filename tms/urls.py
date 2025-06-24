@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/<str:version>/', include('users.urls')),
     path('api/<str:version>/', include('organisations.urls')),
     path('api/<str:version>/', include('dispatch.urls')),
+    path('api/<str:version>/fleet/', include('fleet.urls')),
     path('api/<str:version>/gs-login/', GoogleLoginView.as_view(), name='google-login'),
 ]
 

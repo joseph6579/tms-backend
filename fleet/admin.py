@@ -6,6 +6,7 @@ from fleet.models import (
     PaymentDeduction,
     VehicleAssignmentLogs,
     DriverGroup,
+    DriverProfile,
 )
 
 
@@ -22,9 +23,16 @@ class DriverGroupAdmin(admin.ModelAdmin):
     search_fields = ["name", "description"]
 
 
+@admin.register(DriverProfile)
+class DriverProfileAdmin(admin.ModelAdmin):
+    list_display = ['first_name', 'last_name', 'vehicle', 'status', 'active', 'organisation', 'driver', 'driver_group']
+    list_filter = ['driver', 'organisation', 'driver_group']
+    search_fields = ['first_name', 'last_name']
+
+
 @admin.register(Vehicle)
 class VehicleAdmin(admin.ModelAdmin):
-    list_display = ["registration_number", "source", "vehicle_type"]
+    list_display = ["registration_number", "source", "vehicle_type", 'organisation']
     search_fields = ["registration_number"]
     list_filter = ["source", "vehicle_type"]
 
