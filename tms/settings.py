@@ -33,7 +33,6 @@ THIRD_PARTY_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'corsheaders',
-    "debug_toolbar",
 ]
 
 LOCAL_APPS = [
@@ -57,8 +56,14 @@ MIDDLEWARE = [
     # 'commons.middleware.CustomRollbarNotifierMiddleware',
     "allauth.account.middleware.AccountMiddleware",
     'corsheaders.middleware.CorsMiddleware',
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
+
+if not DEBUG:
+    THIRD_PARTY_APPS.append(
+        "debug_toolbar",
+    )
+    MIDDLEWARE.insert(1, "debug_toolbar.middleware.DebugToolbarMiddleware")
+
 
 ROOT_URLCONF = 'tms.urls'
 
