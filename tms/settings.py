@@ -58,10 +58,8 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-if not DEBUG:
-    THIRD_PARTY_APPS.append(
-        "debug_toolbar",
-    )
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
     MIDDLEWARE.insert(1, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
 
