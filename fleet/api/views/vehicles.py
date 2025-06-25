@@ -1,3 +1,5 @@
+from lib2to3.fixes.fix_input import context
+
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,12 +7,11 @@ from rest_framework import status
 from django.db.models import Prefetch
 
 from fleet.api.filters.vehicles import VehicleFilter
-from fleet.api.serializers.vehicles import VehicleListSerializer, AssignVehicleSerializer
+from fleet.api.serializers.vehicles import VehicleListSerializer, AssignVehicleSerializer, VehicleUpdateSerializer
 from fleet.models import Vehicle, DriverProfile, DriverProfileLogs
 
 
 class VehicleManagementViewset(ReadOnlyModelViewSet):
-    queryset = Vehicle.objects.all()
     serializer_class = VehicleListSerializer
     search_fields = ['registration_number', 'driver_profile__first_name', 'driver_profile__last_name']
     ordering_fields = ['created_at']
@@ -20,9 +21,6 @@ class VehicleManagementViewset(ReadOnlyModelViewSet):
         user = self.request.user
         organisation_id = getattr(user, 'organisation_id')
         is_superuser = getattr(user, 'is_superuser')
-        role = getattr(user, 'role')
-        user_id = getattr(user, 'id')
-        # related_fields = ['driver_profile']
         fields = [
             'registration_number',
             'created_at',
@@ -48,9 +46,15 @@ class VehicleManagementViewset(ReadOnlyModelViewSet):
             return qs.none()
         # TODO: Do drivers require to view/edit their vehicles?
 
+    @action(['post'], detail=True, url_path='update', serializer_class=VehicleUpdateSerializer)
     def update_vehicle(self, request, *args, **kwargs):
-        # use VehicleUpdateSerializer
-        pass
+        vehicle = self.get_object()
+        context = self.get_serializer_context()
+        serializer = self.serializer_class(data=request.data, instance=vehicle, context=context)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        serializer.update(instance=vehicle, validated_data=data)
+        return Response(data, status=status.HTTP_200_OK)
 
     @action(['post'], detail=True, url_path='assign', serializer_class=AssignVehicleSerializer)
     def assign(self, request, *args, **kwargs):
@@ -77,6 +81,3 @@ class VehicleManagementViewset(ReadOnlyModelViewSet):
             return Response({'detail': 'vehicle unassigned successfully'})
         else:
             return Response({'detail': 'vehicle is not assigned'}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# update, assign, unassign

@@ -42,8 +42,8 @@ class VehicleUpdateSerializer(serializers.ModelSerializer):
 
     def validate_registration_number(self, value):
         org = self._get_organisation()
-        organisation_id = getattr(org, 'organisation_id')
-        value = ''.join(value.split().lower())
+        organisation_id = getattr(org, 'id')
+        value = ''.join(value.split()).lower()
         qs = Vehicle.objects.only('id', 'registration_number', 'organisation_id').filter(
             registration_number=value, organisation_id=organisation_id
         )
