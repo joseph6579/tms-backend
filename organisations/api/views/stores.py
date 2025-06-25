@@ -4,12 +4,16 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from commons.permissions import HasCompany
+from organisations.api.filters.stores import StoreFilter
 from organisations.api.serializers.stores import StoreModelSerializer, StoreWriteSerializer
 from organisations.models import Store
 
 
 class StoreManagementViewset(ReadOnlyModelViewSet):
     serializer_class = StoreModelSerializer
+    search_fields = ['name', 'key']
+    ordering_fields = ['created_at', 'broadcast_radius']
+    filterset_class = StoreFilter
 
     def get_queryset(self):
         user = self.request.user
