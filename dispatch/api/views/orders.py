@@ -1,9 +1,7 @@
-from lib2to3.fixes.fix_input import context
-
-from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from dispatch.api.serializers.orders import OrderWriteSerializer, OrderListSerializer
 from dispatch.models import Order
