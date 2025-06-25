@@ -5,20 +5,22 @@ from commons.behaviour import CommonInfo
 from commons.constants import OrderStatusChoices
 from uuid import uuid4
 
+
 class Location(CommonInfo):
     """
     Model to represent a geographical location in the dispatch system.
     """
+
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     name = models.CharField(max_length=100, verbose_name='Location Name')
     description = models.TextField(blank=True, null=True, verbose_name='Description')
     coordinates = geomodels.PointField(verbose_name='Coordinates')
-    address = models.CharField(max_length=255, verbose_name='Address')
-    city = models.CharField(max_length=100, verbose_name='City')
-    state = models.CharField(max_length=100, verbose_name='State')
-    country = models.CharField(max_length=100, verbose_name='Country')
-    postal_code = models.CharField(max_length=20, verbose_name='Postal Code')
-    is_active = models.BooleanField(default=True, verbose_name='Is Active')
+    address = models.CharField(max_length=255, verbose_name='Address', blank=True, null=True)
+    city = models.CharField(max_length=100, verbose_name='City', blank=True, null=True)
+    state = models.CharField(max_length=100, verbose_name='State', blank=True, null=True)
+    country = models.CharField(max_length=100, verbose_name='Country', blank=True, null=True)
+    postal_code = models.CharField(max_length=20, verbose_name='Postal Code', blank=True, null=True)
+    is_active = models.BooleanField(default=True, verbose_name='Is Active', blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} - {self.city}"
@@ -33,43 +35,24 @@ class Location(CommonInfo):
             models.Index(fields=['postal_code']),
         ]
 
-class Customer(CommonInfo):
-    """
-    Model to represent a customer in the dispatch system.
-    """
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
-    name = models.CharField(max_length=100, verbose_name='Customer Name')
-    email = models.EmailField(verbose_name='Email Address', blank=True, null=True)
-    phone_number = models.CharField(max_length=15, verbose_name='Phone Number', blank=True, null=True)
-    location = models.ForeignKey(Location, on_delete=models.PROTECT, verbose_name='Location', related_name='customers',
-                               null=True, blank=True)
-    organization = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='customers')
-    is_active = models.BooleanField(default=True, verbose_name='Is Active')
-    notes = models.TextField(blank=True, null=True, verbose_name='Notes')
-
-    def __str__(self):
-        return f"{self.name} ({self.email})"
-
-    class Meta:
-        verbose_name = 'Customer'
-        verbose_name_plural = 'Customers'
-        ordering = ['name']
-        indexes = [
-            models.Index(fields=['name']),
-            models.Index(fields=['email']),
-            models.Index(fields=['phone_number']),
-        ]
 
 class Trip(CommonInfo):
     """
     Model to represent a trip in the dispatch system.
     """
+
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     driver = models.ForeignKey('users.Driver', on_delete=models.SET_NULL, verbose_name='Driver', null=True, blank=True)
-    vehicle = models.ForeignKey('fleet.Vehicle', on_delete=models.SET_NULL, verbose_name='Vehicle', null=True, blank=True)
+    vehicle = models.ForeignKey(
+        'fleet.Vehicle', on_delete=models.SET_NULL, verbose_name='Vehicle', null=True, blank=True
+    )
     status = models.CharField(max_length=20, default='scheduled', verbose_name='Trip Status')
-    start_location = models.ForeignKey(Location, on_delete=models.PROTECT, related_name='trip_starts', verbose_name='Start Location')
-    end_location = models.ForeignKey(Location, on_delete=models.PROTECT, related_name='trip_ends', verbose_name='End Location')
+    start_location = models.ForeignKey(
+        Location, on_delete=models.PROTECT, related_name='trip_starts', verbose_name='Start Location'
+    )
+    end_location = models.ForeignKey(
+        Location, on_delete=models.PROTECT, related_name='trip_ends', verbose_name='End Location'
+    )
     scheduled_start_time = models.DateTimeField(verbose_name='Scheduled Start Time')
     actual_start_time = models.DateTimeField(null=True, blank=True, verbose_name='Actual Start Time')
     completed_time = models.DateTimeField(null=True, blank=True, verbose_name='Completed Time')
@@ -90,28 +73,43 @@ class Trip(CommonInfo):
             models.Index(fields=['scheduled_start_time']),
         ]
 
+
 class Order(CommonInfo):
     """
     Model to represent an order in the dispatch system.
     """
+
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     reference = models.CharField(max_length=100, verbose_name='Order Reference', unique=True)
     status = models.CharField(
         max_length=20,
         choices=OrderStatusChoices.choices,
         default=OrderStatusChoices.PENDING,
-        verbose_name='Order Status'
+        verbose_name='Order Status',
     )
     priority = models.PositiveIntegerField(
         verbose_name='Priority',
         default=1,
         help_text='1 is highest priority, 5 is lowest priority',
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
     )
-    pickup = models.ForeignKey(Location, on_delete=models.PROTECT, verbose_name='Pickup Location', related_name='pickup_orders')
-    drop_off = models.ForeignKey(Location, on_delete=models.PROTECT, verbose_name='Drop Off Location', related_name='drop_off_orders')
-    recipient = models.ForeignKey(Customer, on_delete=models.CASCADE, verbose_name='Recipient', related_name='orders')
-    buyer = models.ForeignKey(Customer, on_delete=models.CASCADE, verbose_name='Buyer', related_name='buyer_orders', null=True, blank=True)
+    pickup = models.ForeignKey(
+        Location, on_delete=models.PROTECT, verbose_name='Pickup Location', related_name='pickup_orders'
+    )
+    drop_off = models.ForeignKey(
+        Location, on_delete=models.PROTECT, verbose_name='Drop Off Location', related_name='drop_off_orders'
+    )
+    recipient = models.ForeignKey(
+        'organisations.Customer', on_delete=models.CASCADE, verbose_name='Recipient', related_name='orders'
+    )
+    buyer = models.ForeignKey(
+        'organisations.Customer',
+        on_delete=models.CASCADE,
+        verbose_name='Buyer',
+        related_name='buyer_orders',
+        null=True,
+        blank=True,
+    )
     driver = models.ForeignKey('users.Driver', on_delete=models.SET_NULL, verbose_name='Driver', null=True, blank=True)
     organization = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='orders')
 
@@ -122,33 +120,22 @@ class Order(CommonInfo):
         verbose_name='Package Weight (kg)',
         null=True,
         blank=True,
-        help_text='Weight of the package in kilograms'
+        help_text='Weight of the package in kilograms',
     )
     dimensions = models.JSONField(
         verbose_name='Package Dimensions (LxWxH)',
         null=True,
         blank=True,
-        help_text='Dimensions of the package in the format {"length": 0, "width": 0, "height": 0, "unit": "cm"}'
+        help_text='Dimensions of the package in the format {"length": 0, "width": 0, "height": 0, "unit": "cm"}',
     )
     description = models.TextField(
-        verbose_name='Order Description',
-        blank=True,
-        null=True,
-        help_text='Description of the order or package'
+        verbose_name='Order Description', blank=True, null=True, help_text='Description of the order or package'
     )
     instructions = models.TextField(
-        verbose_name='Special Instructions',
-        blank=True,
-        null=True,
-        help_text='Any special instructions for the order'
+        verbose_name='Special Instructions', blank=True, null=True, help_text='Any special instructions for the order'
     )
     trip = models.ForeignKey(
-        Trip,
-        on_delete=models.SET_NULL,
-        verbose_name='Trip',
-        null=True,
-        blank=True,
-        related_name='orders'
+        Trip, on_delete=models.SET_NULL, verbose_name='Trip', null=True, blank=True, related_name='orders'
     )
 
     # Timestamps
@@ -162,7 +149,9 @@ class Order(CommonInfo):
     date_failed = models.DateTimeField(verbose_name='Date Failed', null=True, blank=True)
 
     # Meta
-    meta_data = models.JSONField(verbose_name='Meta Data', blank=True, null=True, help_text='Additional metadata for the order')
+    meta_data = models.JSONField(
+        verbose_name='Meta Data', blank=True, null=True, help_text='Additional metadata for the order'
+    )
     is_active = models.BooleanField(default=True, verbose_name='Is Active')
 
     def __str__(self):
@@ -178,10 +167,12 @@ class Order(CommonInfo):
             models.Index(fields=['scheduled_date']),
         ]
 
+
 class TripStop(CommonInfo):
     """
     Model to represent a stop in a trip.
     """
+
     STOP_TYPE_CHOICES = [
         ('start', 'Start Location'),
         ('pickup', 'Pickup'),
@@ -208,18 +199,9 @@ class TripStop(CommonInfo):
     started_at = models.DateTimeField(null=True, blank=True, verbose_name='Started At')
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name='Completed At')
     completed_by = models.ForeignKey(
-        'users.Driver',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='completed_stops'
+        'users.Driver', on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_stops'
     )
-    status = models.CharField(
-        max_length=20,
-        choices=STOP_STATUS_CHOICES,
-        default='pending',
-        verbose_name='Stop Status'
-    )
+    status = models.CharField(max_length=20, choices=STOP_STATUS_CHOICES, default='pending', verbose_name='Stop Status')
     notes = models.TextField(blank=True, null=True, verbose_name='Notes')
 
     def __str__(self):
@@ -234,20 +216,20 @@ class TripStop(CommonInfo):
             models.Index(fields=['status']),
         ]
 
+
 class OrderReview(CommonInfo):
     """
     Model to store order reviews and ratings
     """
+
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='reviews')
     driver = models.ForeignKey('users.Driver', on_delete=models.CASCADE, related_name='order_reviews')
     rating = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text='Rating from 1 to 5'
+        validators=[MinValueValidator(1), MaxValueValidator(5)], help_text='Rating from 1 to 5'
     )
     driver_rating = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text='Driver rating from 1 to 5'
+        validators=[MinValueValidator(1), MaxValueValidator(5)], help_text='Driver rating from 1 to 5'
     )
     comments = models.TextField(blank=True, null=True)
     reviewed_by = models.ForeignKey('users.CustomUser', on_delete=models.SET_NULL, null=True)
