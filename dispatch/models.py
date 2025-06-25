@@ -80,7 +80,7 @@ class Order(CommonInfo):
     """
 
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
-    reference = models.CharField(max_length=100, verbose_name='Order Reference', unique=True)
+    reference_number = models.CharField(max_length=100, verbose_name='Order Reference Number', blank=True)
     status = models.CharField(
         max_length=20,
         choices=OrderStatusChoices.choices,
@@ -110,13 +110,19 @@ class Order(CommonInfo):
         null=True,
         blank=True,
     )
-    driver = models.ForeignKey('users.Driver', on_delete=models.SET_NULL, verbose_name='Driver', null=True, blank=True)
-    organization = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='orders')
+    # driver = models.ForeignKey('users.Driver', on_delete=models.SET_NULL, verbose_name='Driver', null=True, blank=True)
+    driver_profile = models.ForeignKey(
+        'fleet.DriverProfile', on_delete=models.SET_NULL, related_name='orders', null=True, blank=True
+    )
+    organisation = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='orders')
+    store = models.ForeignKey(
+        'organisations.Store', related_name='orders', blank=True, null=True, on_delete=models.SET_NULL
+    )
 
     # Package info
     weight = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
+        decimal_places=4,
         verbose_name='Package Weight (kg)',
         null=True,
         blank=True,
@@ -155,16 +161,22 @@ class Order(CommonInfo):
     is_active = models.BooleanField(default=True, verbose_name='Is Active')
 
     def __str__(self):
-        return f"Order {self.reference}"
+        return f"Order {self.reference_number}"
 
     class Meta:
         verbose_name = 'Order'
         verbose_name_plural = 'Orders'
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['reference']),
+            models.Index(fields=['reference_number']),
+            models.Index(fields=['reference_number', 'organisation']),
             models.Index(fields=['status']),
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['status', 'date_delivered']),
             models.Index(fields=['scheduled_date']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['reference_number', 'organisation'], name='unique_ref_number_org')
         ]
 
 

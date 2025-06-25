@@ -1,7 +1,6 @@
-from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.geos import Point
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from dispatch.models import Location
 from organisations.api.serializers.stores import LocationWrite
@@ -60,7 +59,7 @@ class CustomerWriteSerializer(serializers.ModelSerializer):
             if isinstance(value, dict):
                 # get or create location object
                 point = Point(value.get('longitude'), value.get('latitude'))
-                value, created = Location.objects.get_or_create(
+                value, created = Location.objects.only('id').get_or_create(
                     defaults={'name': value.get('name'), 'address': value.get('name'), 'coordinates': point}
                 )
         return value

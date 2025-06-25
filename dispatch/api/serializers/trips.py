@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from dispatch.models import Trip, TripStop
-from dispatch.api.serializers.orders import OrderSerializer
+from dispatch.api.serializers.orders_old import OrderSerializer
 from users.api.serializers.users import UserMiniSerializer
+
 
 class TripStopSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,6 +14,7 @@ class TripStopSerializer(serializers.ModelSerializer):
         if data.get('status') == 'completed' and not data.get('completed_at'):
             raise serializers.ValidationError("completed_at is required when status is completed")
         return data
+
 
 class TripSerializer(serializers.ModelSerializer):
     stops = TripStopSerializer(many=True, read_only=True)

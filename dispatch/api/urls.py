@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from dispatch.api.views.orders import OrderViewSet
+from dispatch.api.views.orders_old import OrderViewSet
 from dispatch.api.views.trips import TripViewSet
 from dispatch.api.views.tripstops import TripStopViewSet
 
