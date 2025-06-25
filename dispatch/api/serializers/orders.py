@@ -1,16 +1,20 @@
 from rest_framework import serializers
-from dispatch.models import Order, Location, Customer, OrderReview
+from dispatch.models import Order, Location, OrderReview
+from organisations.models import Customer
 from users.api.serializers.users import UserMiniSerializer
+
 
 class LocationMiniSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = ['id', 'name', 'address', 'city']
 
+
 class CustomerMiniSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['id', 'name', 'email', 'phone_number']
+
 
 class OrderReviewSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,6 +25,7 @@ class OrderReviewSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['reviewed_by'] = self.context['request'].user
         return super().create(validated_data)
+
 
 class OrderSerializer(serializers.ModelSerializer):
     pickup_details = LocationMiniSerializer(source='pickup', read_only=True)

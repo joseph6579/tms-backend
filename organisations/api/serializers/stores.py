@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.crypto import get_random_string
 
 
-class StoreLocation(serializers.Serializer):
+class LocationWrite(serializers.Serializer):
     name = serializers.CharField(max_length=200)
     latitude = serializers.FloatField()
     longitude = serializers.FloatField()
@@ -19,7 +19,7 @@ class StoreLocation(serializers.Serializer):
 
 
 class StoreWriteSerializer(serializers.ModelSerializer):
-    location = StoreLocation()
+    location = LocationWrite()
 
     class Meta:
         model = Store

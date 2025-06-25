@@ -1,9 +1,11 @@
 import uuid
+from uuid import uuid4
 
 from django.db import models
 from django.core.validators import MinValueValidator
 
 from commons.behaviour import CommonInfo
+from dispatch.models import Location
 
 
 class Permission(CommonInfo):
@@ -162,4 +164,34 @@ class Store(CommonInfo):
         indexes = [
             models.Index(fields=['name', 'organisation'], name='name_organisation_index'),
             models.Index(fields=['key', 'organisation'], name='key_organisation_index'),
+        ]
+
+
+class Customer(CommonInfo):
+    """
+    Model to represent a customer in the dispatch system.
+    """
+
+    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
+    name = models.CharField(max_length=100, verbose_name='Customer Name')
+    email = models.EmailField(verbose_name='Email Address', blank=True, null=True)
+    phone_number = models.CharField(max_length=15, verbose_name='Phone Number', blank=True, null=True)
+    location = models.ForeignKey(
+        Location, on_delete=models.PROTECT, verbose_name='Location', related_name='customers', null=True, blank=True
+    )
+    organisation = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='customers')
+    is_active = models.BooleanField(default=True, verbose_name='Is Active')
+    notes = models.TextField(blank=True, null=True, verbose_name='Notes')
+
+    def __str__(self):
+        return f"{self.name} ({self.email})"
+
+    class Meta:
+        verbose_name = 'Customer'
+        verbose_name_plural = 'Customers'
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['email']),
+            models.Index(fields=['phone_number']),
         ]
