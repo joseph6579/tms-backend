@@ -289,5 +289,3 @@ SOCIALACCOUNT_PROVIDERS = {
 # Paystack Settings
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', cast=str, default='')
 PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY', cast=str, default='')
-
-GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH") or find_library("gdal") or "/usr/lib/libgdal.so"

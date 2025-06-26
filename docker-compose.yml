@@ -28,6 +28,8 @@ services:
           context: .
         container_name: tms_django
         restart: unless-stopped
+        environment:
+          - GDAL_LIBRARY_PATH=/usr/lib/libgdal.so.30
         volumes:
           - .:/code
           - ./deployment/gunicorn/logs:/deployment/gunicorn/logs
@@ -46,7 +48,7 @@ services:
               condition: service_started
 
     pgadmin:
-        image: dpage/pgadmin4
+        image: postgis/postgis:16-3.4
         container_name: tms_pgadmin
         restart: always
         environment:
@@ -145,4 +147,3 @@ volumes:
       driver: local
     media:
         driver: local
-

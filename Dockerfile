@@ -3,7 +3,9 @@ FROM python:3.11-bullseye
 ENV PYTHONUNBUFFERED=1 \
     CPLUS_INCLUDE_PATH=/usr/include/gdal \
     C_INCLUDE_PATH=/usr/include/gdal \
-    GDAL_VERSION=3.8.4
+    GDAL_VERSION=3.8.4 \
+    LD_LIBRARY_PATH=/usr/lib:/usr/lib/x86_64-linux-gnu
+
 
 # Install required OS packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
