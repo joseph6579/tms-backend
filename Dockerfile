@@ -1,8 +1,8 @@
 FROM python:3.11.0-alpine
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
-# Install build deps and lib dependencies
+# Install runtime + build dependencies
 RUN apk update && apk add --no-cache \
     gcc \
     musl-dev \
@@ -17,20 +17,26 @@ RUN apk update && apk add --no-cache \
     freetype-dev \
     openblas-dev \
     libpng-dev \
-    gdal gdal-dev \
+    gdal \
+    gdal-dev \
     geos-dev
 
-RUN mkdir /code
+# Set working directory
 WORKDIR /code
-COPY . /code/
 
+# Copy project files
+COPY . .
+
+# Make entrypoint executable
 RUN chmod +x ./entrypoint.sh
 
-RUN pip install -U pip
-RUN pip install -r requirements.txt
+# Upgrade pip and install Python dependencies
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN apk del build-base gcc musl-dev ...
+# Optionally remove build dependencies (careful!)
+# Only remove **after** requirements are successfully built
+RUN apk del build-base gcc musl-dev python3-dev cargo linux-headers
 
-# Ensure the entrypoint script has execute permissions
-
+# Run the app
 ENTRYPOINT ["./entrypoint.sh"]
