@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
 
-# Install system build dependencies
+# Install build and GDAL dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
@@ -21,13 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgeos-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables for GDAL
+# Set GDAL environment paths
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
-
-# Optional: preinstall numpy before GDAL to avoid array warning
-RUN pip install --upgrade pip
-RUN pip install numpy
 
 # Set working directory
 WORKDIR /code
@@ -38,7 +34,9 @@ COPY . .
 # Make entrypoint executable
 RUN chmod +x ./entrypoint.sh
 
-# Install project dependencies
+# Install Python dependencies
+RUN pip install --upgrade pip
+RUN pip install numpy  # Important before GDAL
 RUN pip install --no-cache-dir -r requirements.txt
 
 ENTRYPOINT ["./entrypoint.sh"]
