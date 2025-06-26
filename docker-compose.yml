@@ -1,6 +1,5 @@
 services:
     db:
-      entrypoint: ["./entrypoint.sh"]
       build: ./deployment/postgres
       container_name: tms_db
       restart: unless-stopped
@@ -27,6 +26,7 @@ services:
     web:
         build:
           context: .
+        entrypoint: ["./entrypoint.sh"]
         container_name: tms_django
         restart: unless-stopped
         environment:
