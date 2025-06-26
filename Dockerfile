@@ -38,8 +38,7 @@ RUN chmod +x ./entrypoint.sh
 RUN pip install --upgrade pip
 
 RUN pip install numpy \
- && GDAL_VERSION=$(gdal-config --version) \
- && pip install GDAL=="$GDAL_VERSION" \
+ && pip install "GDAL==$(gdal-config --version)" \
  && pip install --no-cache-dir -r requirements.txt
 
 
