@@ -1,7 +1,6 @@
-from django.utils.translation import gettext_lazy as _
 from django.contrib.gis.geos import Point
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
-from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from dispatch.models import Location
 from organisations.api.serializers.stores import LocationWrite
