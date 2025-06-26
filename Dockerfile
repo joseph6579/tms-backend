@@ -2,25 +2,29 @@ FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
 
-# Install runtime + build dependencies
-RUN apk update && apk add --no-cache \
+# Install runtime + build dependencies using apt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     gcc \
-    musl-dev \
+    g++ \
     libffi-dev \
-    postgresql-dev \
+    libpq-dev \
     python3-dev \
-    build-base \
     cargo \
-    linux-headers \
-    jpeg-dev \
-    zlib-dev \
-    freetype-dev \
-    openblas-dev \
+    linux-headers-amd64 \
+    libjpeg-dev \
+    zlib1g-dev \
+    libfreetype6-dev \
+    libopenblas-dev \
     libpng-dev \
-    gdal \
-    gdal-dev \
-    geos-dev \
-    py3-numpy
+    gdal-bin \
+    libgdal-dev \
+    libgeos-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for GDAL to build correctly
+ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
+ENV C_INCLUDE_PATH=/usr/include/gdal
 
 # Set working directory
 WORKDIR /code
@@ -31,13 +35,10 @@ COPY . .
 # Make entrypoint executable
 RUN chmod +x ./entrypoint.sh
 
-# Upgrade pip and install Python dependencies
+# Upgrade pip and install dependencies
 RUN pip install --upgrade pip
+RUN pip install --no-cache-dir numpy  # prevent GDAL numpy warnings
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Optionally remove build dependencies (careful!)
-# Only remove **after** requirements are successfully built
-RUN apk del build-base gcc musl-dev python3-dev cargo linux-headers
 
 # Run the app
 ENTRYPOINT ["./entrypoint.sh"]
