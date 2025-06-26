@@ -157,7 +157,6 @@ CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=str, default='http://localhost').split(',')
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
-print(f'The allowed origins are: {CORS_ALLOWED_ORIGINS}')
 CORS_ALLOWED_REGEXES = [
     r'^http://localhost:',
 ]
