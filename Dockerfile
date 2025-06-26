@@ -36,7 +36,9 @@ RUN chmod +x ./entrypoint.sh
 
 # Install Python deps
 RUN pip install --upgrade pip
-RUN pip install numpy  # Needed before GDAL
-RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install numpy \
+ && pip install GDAL==$(gdal-config --version) \
+ && pip install --no-cache-dir -r requirements.txt
 
 ENTRYPOINT ["./entrypoint.sh"]
