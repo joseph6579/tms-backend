@@ -97,9 +97,9 @@ services:
         dockerfile: ./deployment/celery/celery.dockerfile
       container_name: tms_celery
       environment:
+        - GDAL_LIBRARY_PATH=/usr/lib/libgdal.so.30
         - CELERY_BROKER_URL=redis://tms_redis:6379/0
         - PYTHONPATH=/tms-backend:/tms-backend/tms
-        - GDAL_LIBRARY_PATH=/usr/lib/libgdal.so.30
       restart: unless-stopped
       volumes:
         - .:/tms-backend
@@ -117,10 +117,10 @@ services:
         dockerfile: ./deployment/celery/flower.dockerfile
       container_name: tms_celery_flower
       environment:
+        - GDAL_LIBRARY_PATH=/usr/lib/libgdal.so.30
         - PYTHONPATH=/tms-backend:/tms-backend/tms
 #        - FLOWER_URL_PREFIX=/flower
         - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
-        - GDAL_LIBRARY_PATH=/usr/lib/libgdal.so.30
       restart: unless-stopped
       volumes:
         - .:/tms-backend
