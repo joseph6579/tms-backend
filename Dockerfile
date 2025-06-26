@@ -35,6 +35,7 @@ RUN which gdal-config && gdal-config --version
 WORKDIR /code
 COPY . .
 
+COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
 # Install Python deps
