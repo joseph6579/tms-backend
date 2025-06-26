@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1 \
     GDAL_VERSION=3.8.4 \
     LD_LIBRARY_PATH=/usr/lib:/usr/lib/x86_64-linux-gnu
 
+ENV GDAL_LIBRARY_PATH=/usr/lib/libgdal.so.30
 
 # Install required OS packages
 RUN apt-get update && apt-get install -y --no-install-recommends \

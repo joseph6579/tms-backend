@@ -48,7 +48,7 @@ services:
               condition: service_started
 
     pgadmin:
-        image: postgis/postgis:15-3.3
+        image: dpage/pgadmin4:latest
         container_name: tms_pgadmin
         restart: always
         environment:
@@ -98,7 +98,7 @@ services:
       container_name: tms_celery
       environment:
         - CELERY_BROKER_URL=redis://tms_redis:6379/0
-        - PYTHONPATH=/tms-backend:/tms-backend/tms]
+        - PYTHONPATH=/tms-backend:/tms-backend/tms
         - GDAL_LIBRARY_PATH=/usr/lib/libgdal.so.30
       restart: unless-stopped
       volumes:
