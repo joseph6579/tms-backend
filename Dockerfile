@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     gdal-bin \
     libgdal-dev \
+    python3-gdal \
     libgeos-dev \
     binutils \
     && rm -rf /var/lib/apt/lists/*
