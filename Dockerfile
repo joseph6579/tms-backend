@@ -19,7 +19,8 @@ RUN apk update && apk add --no-cache \
     libpng-dev \
     gdal \
     gdal-dev \
-    geos-dev
+    geos-dev \
+    py3-numpy
 
 # Set working directory
 WORKDIR /code
