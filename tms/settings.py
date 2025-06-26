@@ -4,6 +4,8 @@ from pathlib import Path
 
 from celery.worker.strategy import default
 from decouple import config
+import os
+from ctypes.util import find_library
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -287,3 +289,5 @@ SOCIALACCOUNT_PROVIDERS = {
 # Paystack Settings
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', cast=str, default='')
 PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY', cast=str, default='')
+
+GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH") or find_library("gdal") or "/usr/lib/libgdal.so"
