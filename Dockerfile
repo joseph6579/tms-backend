@@ -16,7 +16,9 @@ RUN apk update && apk add --no-cache \
     zlib-dev \
     freetype-dev \
     openblas-dev \
-    libpng-dev
+    libpng-dev \
+    gdal gdal-dev \
+    geos-dev
 
 RUN mkdir /code
 WORKDIR /code
