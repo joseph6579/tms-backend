@@ -1,5 +1,6 @@
 services:
     db:
+      entrypoint: ["./entrypoint.sh"]
       build: ./deployment/postgres
       container_name: tms_db
       restart: unless-stopped
@@ -94,7 +95,9 @@ services:
     celery:
       build:
         context: .
-        dockerfile: ./deployment/celery/celery.dockerfile
+        dockerfile: Dockerfile
+#        dockerfile: ./deployment/celery/celery.dockerfile
+      command: celery -A tms worker --loglevel=info
       container_name: tms_celery
       environment:
         - GDAL_LIBRARY_PATH=/usr/lib/libgdal.so.30
@@ -114,12 +117,13 @@ services:
     celery_flower:
       build:
         context: .
-        dockerfile: ./deployment/celery/flower.dockerfile
+        dockerfile: Dockerfile
+#        dockerfile: ./deployment/celery/flower.dockerfile
+      command: celery -A tms flower --loglevel=info --basic_auth=${FLOWER_BASIC_AUTH}
       container_name: tms_celery_flower
       environment:
         - GDAL_LIBRARY_PATH=/usr/lib/libgdal.so.30
         - PYTHONPATH=/tms-backend:/tms-backend/tms
-#        - FLOWER_URL_PREFIX=/flower
         - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
       restart: unless-stopped
       volumes:

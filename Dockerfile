@@ -42,4 +42,4 @@ RUN pip install --upgrade pip
 RUN pip install numpy
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENTRYPOINT ["./entrypoint.sh"]
+#ENTRYPOINT ["./entrypoint.sh"]
