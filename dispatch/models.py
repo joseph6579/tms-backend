@@ -12,6 +12,9 @@ class Location(CommonInfo):
     """
 
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
+    organisation = models.ForeignKey(
+        'organisations.Organisation', related_name='locations', blank=True, null=True, on_delete=models.SET_NULL
+    )
     name = models.CharField(max_length=100, verbose_name='Location Name')
     description = models.TextField(blank=True, null=True, verbose_name='Description')
     coordinates = geomodels.PointField(verbose_name='Coordinates')

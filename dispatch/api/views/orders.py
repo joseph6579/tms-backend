@@ -11,6 +11,7 @@ class OrderManagementViewset(ReadOnlyModelViewSet):
     queryset = Order.objects.all()
     # serializer_class = OrderWriteSerializer
     serializer_class = OrderListSerializer
+    # TODO: Optimize the queryset
 
     @action(['post'], detail=False, url_path='create', serializer_class=OrderWriteSerializer)
     def create_order(self, request, *args, **kwargs):

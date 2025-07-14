@@ -1,6 +1,11 @@
+from django.utils.translation import gettext_lazy as _
+
 from rest_framework import serializers
-from dispatch.models import Trip, TripStop
+
+from commons.constants import OrderStatusChoices
+from dispatch.models import Trip, TripStop, Order
 from dispatch.api.serializers.orders_old import OrderSerializer
+from fleet.models import DriverProfile
 from users.api.serializers.users import UserMiniSerializer
 
 
@@ -38,13 +43,69 @@ class TripCreationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class LocationForTrip(serializers.Serializer):
+    name = serializers.CharField(max_length=1000)
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
+
+
+class OrderForTripSerializer(serializers.Serializer):
+    # id = serializers.PrimaryKeyRelatedField(queryset=Order.objects.all())
+    id = serializers.UUIDField()
+    origin = LocationForTrip()
+    drop_off = LocationForTrip()
+
+
 class BasicTripCreationSerializer(serializers.Serializer):
     """
-    The base serializer used to create non optimized Trips.
-    It should be flexible enough to be extended
+    Serializer used to create non optimized Trips.
     1. Orders - a list of orders
-    2. Driver Profile - optional
-    3.
+    2. Driver Profile
     """
 
-    pass
+    # orders = serializers.ListSerializer(
+    #     child=serializers.PrimaryKeyRelatedField(queryset=Order.objects.all())
+    # )
+    orders = serializers.ListSerializer(child=OrderForTripSerializer(), allow_empty=False, allow_null=False)
+    driver_profile = serializers.PrimaryKeyRelatedField(queryset=DriverProfile.objects.all())
+    start_location = LocationForTrip()
+    end_location = LocationForTrip()  # Should be the last point of the trip
+
+    def _get_user(self):
+        return self.context['request'].user
+
+    def _get_organisation(self):
+        user = self._get_user()
+        return user.organisation_id if user else None
+
+    def validate_orders(self, values):
+        """
+        1. Check if all orders are from the same organisation
+        2. Check if all orders are in a non-assigned status
+        :param values:
+        :return: raise a validation error or return the validated values
+        """
+        org_id = self._get_organisation()
+        order_ids = [order.get('id') for order in values]
+        allowed_statuses = OrderStatusChoices.unassigned_statuses()
+        rows = Order.objects.filter(id__in=order_ids).values_list('organisation_id', 'status')
+        org_ids = set()
+        invalid_status_found = False
+
+        for org, status in rows:
+            org_ids.add(org)
+            if status not in allowed_statuses:
+                invalid_status_found = True
+                break
+
+        if len(org_ids) != 1 or org_id not in org_ids:
+            raise serializers.ValidationError(_("Orders do not all belong to the current organisation"))
+
+        if invalid_status_found:
+            raise serializers.ValidationError(_("Some orders have an invalid status"))
+        return values
+
+    def validate_driver_profile(self, value):
+        if value.organisation_id != self._get_organisation():
+            raise serializers.ValidationError(_('Incorrect driver data'))
+        return value

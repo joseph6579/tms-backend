@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -6,8 +7,10 @@ from django.utils import timezone
 
 from dispatch.models import Trip, Order, TripStop
 from dispatch.services.trip_service import TripService
-from fleet.models import Vehicle
-from dispatch.api.serializers.trips import TripSerializer, TripCreationSerializer
+from dispatch.utils import get_or_create_location
+from fleet.models import Vehicle, DriverProfile
+from dispatch.api.serializers.trips import TripSerializer, TripCreationSerializer, BasicTripCreationSerializer
+from users.models import Driver
 
 
 class TripViewSet(viewsets.ModelViewSet):
@@ -144,7 +147,8 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
     queryset = Trip.objects.all()
     serializer_class = TripCreationSerializer
 
-    @action(methods=['post'], detail=False, url_path='create')
+    @transaction.atomic()
+    @action(methods=['post'], detail=False, url_path='create', serializer_class=BasicTripCreationSerializer)
     def create_trip(self, request, *args, **kwargs):
         """
         Create a trip with a driver
@@ -155,5 +159,36 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
         """
         serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
+        """
+        1. Lock all order rows
+        2. Create trip
+        3. Create trip steps
+        4. Update order status to assigned
+        5. Update driver profile status to busy
+        6. Unlock rows
+        """
+        data = serializer.validated_data
+        driver_profile_id = serializer.data.get('driver_profile', None)
+        driver_profile = (
+            DriverProfile.objects.only('id', 'vehicle_id').get(id=driver_profile_id) if driver_profile_id else None
+        )
+        org = self.request.user.organisation
+        vehicle = driver_profile.vehicle if driver_profile else None
+        trip_status = 'assigned' if driver_profile else 'pending'
+        start_location_data = data.get('start_location', None)
+        end_location_data = data.get('end_location', None)
+        start_location = get_or_create_location(organisation_id=org.id, **start_location_data)
+        end_location = (
+            get_or_create_location(organisation_id=org.id, **end_location_data) if end_location_data else None
+        )
+
+        trip = Trip.objects.create(
+            driver_profile=driver_profile,
+            vehicle=vehicle,
+            organisation=org,
+            status=trip_status,
+            start_location=start_location,
+            end_location=end_location,
+        )
 
         return Response({'detail': 'Trip created successfully'}, status=status.HTTP_201_CREATED)

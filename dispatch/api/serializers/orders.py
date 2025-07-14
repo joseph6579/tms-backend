@@ -195,7 +195,32 @@ class OrderWriteSerializer(serializers.ModelSerializer):
         return self._validate_location(data=value, field='drop_off')
 
 
+class LocationMinimSerializer(serializers.ModelSerializer):
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Location
+        fields = ['id', 'name', 'address', 'latitude', 'longitude']
+
+    def get_latitude(self, obj):
+        return obj.coordinates.y
+
+    def get_longitude(self, obj):
+        return obj.coordinates.x
+
+
+class RecipientMinimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ['id', 'name', 'phone_number', 'email']
+
+
 class OrderListSerializer(serializers.ModelSerializer):
+    pickup = LocationMinimSerializer()
+    drop_off = LocationMinimSerializer()
+    recipient = RecipientMinimSerializer()
+
     class Meta:
         model = Order
         fields = '__all__'

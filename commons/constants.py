@@ -31,3 +31,7 @@ class OrderStatusChoices(models.TextChoices):
     COMPLETED = 'delivered', 'delivered'
     CANCELLED = 'cancelled', 'Cancelled'
     FAILED = 'failed', 'Failed'
+
+    @classmethod
+    def unassigned_statuses(cls) -> list[str]:
+        return [cls.SCHEDULED.value, cls.PENDING.value]
