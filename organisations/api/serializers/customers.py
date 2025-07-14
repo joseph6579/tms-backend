@@ -59,7 +59,7 @@ class CustomerWriteSerializer(serializers.ModelSerializer):
             if isinstance(value, dict):
                 # get or create location object
                 point = Point(value.get('longitude'), value.get('latitude'))
-                value, created = Location.objects.get_or_create(
+                value, created = Location.objects.only('id').get_or_create(
                     defaults={'name': value.get('name'), 'address': value.get('name'), 'coordinates': point}
                 )
         return value

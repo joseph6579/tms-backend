@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from dispatch.models import Trip, TripStop
-from dispatch.api.serializers.orders import OrderSerializer
+from dispatch.api.serializers.orders_old import OrderSerializer
 from users.api.serializers.users import UserMiniSerializer
 
 
@@ -32,7 +32,9 @@ class TripSerializer(serializers.ModelSerializer):
         return data
 
 
+
 class TripCreationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trip
         fields = '__all__'
+
