@@ -144,11 +144,16 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
     queryset = Trip.objects.all()
     serializer_class = TripCreationSerializer
 
-    def create_trip(self, *args, **kwargs):
+    @action(methods=['post'], detail=False, url_path='create')
+    def create_trip(self, request, *args, **kwargs):
         """
         Create a trip with a driver
+        :param request:
         :param args:
         :param kwargs:
         :return:
         """
+        serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+
         return Response({'detail': 'Trip created successfully'}, status=status.HTTP_201_CREATED)

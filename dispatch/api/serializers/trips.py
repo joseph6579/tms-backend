@@ -32,9 +32,19 @@ class TripSerializer(serializers.ModelSerializer):
         return data
 
 
-
 class TripCreationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Trip
         fields = '__all__'
 
+
+class BasicTripCreationSerializer(serializers.Serializer):
+    """
+    The base serializer used to create non optimized Trips.
+    It should be flexible enough to be extended
+    1. Orders - a list of orders
+    2. Driver Profile - optional
+    3.
+    """
+
+    pass
