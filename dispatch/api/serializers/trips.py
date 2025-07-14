@@ -30,3 +30,11 @@ class TripSerializer(serializers.ModelSerializer):
         if data.get('status') == 'completed' and not data.get('completed_time'):
             raise serializers.ValidationError("completed_time is required when status is completed")
         return data
+
+
+
+class TripCreationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Trip
+        fields = '__all__'
+

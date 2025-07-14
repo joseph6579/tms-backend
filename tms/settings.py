@@ -4,6 +4,8 @@ from pathlib import Path
 
 from celery.worker.strategy import default
 from decouple import config
+import os
+from ctypes.util import find_library
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -150,11 +152,11 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=str, default='http://localhost').split(',')
 
 CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=str, default='http://localhost').split(',')
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CORS_ALLOWED_REGEXES = [
     r'^http://localhost:',
 ]
