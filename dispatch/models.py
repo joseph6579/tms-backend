@@ -137,6 +137,9 @@ class Order(CommonInfo):
         null=True,
         blank=True,
     )
+    added_by_user = models.ForeignKey(
+        'users.CustomUser', on_delete=models.SET_NULL, related_name='added_order', null=True, blank=True
+    )
     driver_profile = models.ForeignKey(
         'fleet.DriverProfile', on_delete=models.SET_NULL, related_name='orders', null=True, blank=True
     )

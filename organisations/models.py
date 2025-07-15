@@ -156,7 +156,7 @@ class Store(CommonInfo):
     broadcast_radius = models.PositiveIntegerField(default=50, help_text='maximum broadcast radius')
 
     def __str__(self):
-        return f'{self.name} - {self.organisation}'
+        return f'{self.name}'
 
     class Meta:
         constraints = [

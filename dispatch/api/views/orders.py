@@ -1,24 +1,45 @@
+from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
+from dispatch.api.filters.orders import OrderFilter
 from dispatch.api.serializers.orders import OrderWriteSerializer, OrderListSerializer
 from dispatch.models import Order
 
 
 class OrderManagementViewset(ReadOnlyModelViewSet):
-    queryset = Order.objects.all()
-    # serializer_class = OrderWriteSerializer
+    filterset_class = OrderFilter
+    search_fields = [
+        'reference_number',
+        'driver__first_name',
+        'driver__last_name',
+        'recipient__name',
+        'recipient__email',
+        'recipient__phone_numer',
+        'buyer__name',
+        'buyer__email',
+        'buyer__phone_numer',
+    ]
+    ordering_fields = ['created_at', 'updated_at', 'date_delivered']
     serializer_class = OrderListSerializer
-    # TODO: Optimize the queryset
 
     def get_queryset(self):
         user = self.request.user
         is_superuser = getattr(user, 'is_superuser', False)
         org_id = getattr(user, 'organisation_id', None)
 
-        related_fields = ['driver_profile', 'recipient', 'pickup', 'drop_off', 'store', 'buyer']
+        related_fields = [
+            'driver_profile',
+            'recipient',
+            'pickup',
+            'drop_off',
+            'store',
+            'buyer',
+            'organisation',
+            'driver_profile__driver',
+        ]
         fields = [
             'id',
             'created_at',
@@ -65,6 +86,7 @@ class OrderManagementViewset(ReadOnlyModelViewSet):
         else:
             return qs.none()
 
+    @transaction.atomic()
     @action(['post'], detail=False, url_path='create', serializer_class=OrderWriteSerializer)
     def create_order(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
