@@ -1,4 +1,3 @@
-from django.db import models
 from pydantic import BaseModel
 
 
@@ -21,13 +20,3 @@ class StatusChoices(BaseModel):
     @classmethod
     def choices(cls):
         return [(value, value.replace('_', ' ').title()) for value in cls.__annotations__.values()]
-
-
-class OrderStatusChoices(models.TextChoices):
-    SCHEDULED = 'scheduled', 'Scheduled'
-    PENDING = 'pending', 'Pending'
-    BROADCASTED = 'broadcasted', 'Broadcasted'
-    IN_PROGRESS = 'in_progress', 'In Progress'
-    COMPLETED = 'delivered', 'delivered'
-    CANCELLED = 'cancelled', 'Cancelled'
-    FAILED = 'failed', 'Failed'

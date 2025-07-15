@@ -36,6 +36,7 @@ THIRD_PARTY_APPS = [
     'allauth.socialaccount.providers.google',
     'corsheaders',
     'django_filters',
+    'django.contrib.gis',
 ]
 
 LOCAL_APPS = [

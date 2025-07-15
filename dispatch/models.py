@@ -2,7 +2,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.gis.db import models as geomodels
 from commons.behaviour import CommonInfo
-from commons.constants import OrderStatusChoices
+from dispatch.constants import OrderStatusChoices, TripStopTypesChoices
 from uuid import uuid4
 
 
@@ -12,6 +12,9 @@ class Location(CommonInfo):
     """
 
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
+    organisation = models.ForeignKey(
+        'organisations.Organisation', related_name='locations', blank=True, null=True, on_delete=models.SET_NULL
+    )
     name = models.CharField(max_length=100, verbose_name='Location Name')
     description = models.TextField(blank=True, null=True, verbose_name='Description')
     coordinates = geomodels.PointField(verbose_name='Coordinates')
@@ -41,36 +44,60 @@ class Trip(CommonInfo):
     Model to represent a trip in the dispatch system.
     """
 
+    STATUS_CHOICES = [
+        ('scheduled', 'scheduled'),
+        ('pending', 'pending'),
+        ('on_going', 'on_going'),
+        ('complete', 'complete'),
+    ]
+
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
-    driver = models.ForeignKey('users.Driver', on_delete=models.SET_NULL, verbose_name='Driver', null=True, blank=True)
+    organisation = models.ForeignKey(
+        'organisations.Organisation', related_name='trips', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    driver_profile = models.ForeignKey(
+        'fleet.DriverProfile', on_delete=models.SET_NULL, related_name='trips', null=True, blank=True
+    )
     vehicle = models.ForeignKey(
         'fleet.Vehicle', on_delete=models.SET_NULL, verbose_name='Vehicle', null=True, blank=True
     )
-    status = models.CharField(max_length=20, default='scheduled', verbose_name='Trip Status')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='Trip Status')
     start_location = models.ForeignKey(
         Location, on_delete=models.PROTECT, related_name='trip_starts', verbose_name='Start Location'
     )
     end_location = models.ForeignKey(
-        Location, on_delete=models.PROTECT, related_name='trip_ends', verbose_name='End Location'
+        Location,
+        on_delete=models.PROTECT,
+        related_name='trip_ends',
+        verbose_name='End Location',
+        help_text='Can be used for round trips',
     )
-    scheduled_start_time = models.DateTimeField(verbose_name='Scheduled Start Time')
+    scheduled_start_time = models.DateTimeField(verbose_name='Scheduled Start Time', null=True, blank=True)
     actual_start_time = models.DateTimeField(null=True, blank=True, verbose_name='Actual Start Time')
     completed_time = models.DateTimeField(null=True, blank=True, verbose_name='Completed Time')
     distance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Distance (km)')
     estimated_duration = models.DurationField(null=True, blank=True, verbose_name='Estimated Duration')
     actual_duration = models.DurationField(null=True, blank=True, verbose_name='Actual Duration')
+    planned_geometry = models.TextField(blank=True, null=True, help_text='The planned geometry')
+    actual_geometry = models.TextField(blank=True, null=True, help_text='The actual geometry')
     notes = models.TextField(blank=True, null=True, verbose_name='Notes')
 
     def __str__(self):
-        return f"Trip {self.id} - {self.driver}"
+        return f"Trip {self.id}"
 
     class Meta:
         verbose_name = 'Trip'
         verbose_name_plural = 'Trips'
-        ordering = ['-scheduled_start_time']
+        ordering = ['-created_at']
         indexes = [
             models.Index(fields=['status']),
+            models.Index(fields=['driver_profile']),
             models.Index(fields=['scheduled_start_time']),
+            models.Index(fields=['organisation']),
+            models.Index(fields=['organisation', 'status']),
+            models.Index(fields=['organisation', 'created_at']),
+            models.Index(fields=['organisation', 'completed_time']),
+            models.Index(fields=['organisation', 'scheduled_start_time']),
         ]
 
 
@@ -110,7 +137,9 @@ class Order(CommonInfo):
         null=True,
         blank=True,
     )
-    # driver = models.ForeignKey('users.Driver', on_delete=models.SET_NULL, verbose_name='Driver', null=True, blank=True)
+    added_by_user = models.ForeignKey(
+        'users.CustomUser', on_delete=models.SET_NULL, related_name='added_order', null=True, blank=True
+    )
     driver_profile = models.ForeignKey(
         'fleet.DriverProfile', on_delete=models.SET_NULL, related_name='orders', null=True, blank=True
     )
@@ -174,6 +203,10 @@ class Order(CommonInfo):
             models.Index(fields=['status', 'created_at']),
             models.Index(fields=['status', 'date_delivered']),
             models.Index(fields=['scheduled_date']),
+            models.Index(fields=['trip']),
+            models.Index(fields=['organisation']),
+            models.Index(fields=['organisation', 'status']),
+            models.Index(fields=['organisation', 'driver_profile']),
         ]
         constraints = [
             models.UniqueConstraint(fields=['reference_number', 'organisation'], name='unique_ref_number_org')
@@ -185,35 +218,21 @@ class TripStop(CommonInfo):
     Model to represent a stop in a trip.
     """
 
-    STOP_TYPE_CHOICES = [
-        ('start', 'Start Location'),
-        ('pickup', 'Pickup'),
-        ('drop_off', 'Dropoff'),
-        ('end', 'End Location'),
-    ]
-
-    STOP_STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('arrived', 'Arrived'),
-        ('completed', 'Completed'),
-        ('skipped', 'Skipped'),
-        ('failed', 'Failed'),
-    ]
-
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
-    order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL, related_name='stops')
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stops')
+    order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL, related_name='stops')
+    driver_profile = models.ForeignKey(
+        'fleet.DriverProfile', null=True, blank=True, related_name='stops', on_delete=models.SET_NULL
+    )
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='stops')
-    stop_type = models.CharField(max_length=10, choices=STOP_TYPE_CHOICES, default='pickup')
+    stop_type = models.CharField(max_length=20, choices=TripStopTypesChoices, default='pickup')
     sequence = models.PositiveIntegerField()
-    eta = models.DateTimeField(null=True, blank=True, verbose_name='Estimated Time of Arrival')
-    actual_arrival = models.DateTimeField(null=True, blank=True, verbose_name='Actual Arrival Time')
-    started_at = models.DateTimeField(null=True, blank=True, verbose_name='Started At')
+    estimated_duration = models.PositiveIntegerField(null=True, blank=True, help_text='Estimated Duration in Seconds')
+    completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name='Completed At')
     completed_by = models.ForeignKey(
-        'users.Driver', on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_stops'
+        'fleet.DriverProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_stops'
     )
-    status = models.CharField(max_length=20, choices=STOP_STATUS_CHOICES, default='pending', verbose_name='Stop Status')
     notes = models.TextField(blank=True, null=True, verbose_name='Notes')
 
     def __str__(self):
@@ -222,10 +241,14 @@ class TripStop(CommonInfo):
     class Meta:
         verbose_name = 'Trip Stop'
         verbose_name_plural = 'Trip Stops'
-        ordering = ['trip', 'sequence']
+        ordering = ['trip', 'sequence', 'stop_type']
         indexes = [
+            models.Index(fields=['stop_type']),
+            models.Index(fields=['driver_profile']),
+            models.Index(fields=['order']),
             models.Index(fields=['trip', 'sequence']),
-            models.Index(fields=['status']),
+            models.Index(fields=['trip', 'order']),
+            models.Index(fields=['trip', 'driver_profile']),
         ]
 
 

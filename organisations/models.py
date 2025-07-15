@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 
 from commons.behaviour import CommonInfo
 from dispatch.models import Location
+from organisations.preferences.schemas.trip_stops import default_steps_config
 
 
 class Permission(CommonInfo):
@@ -114,6 +115,7 @@ class OrganisationPreferences(CommonInfo):
 
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     organisation = models.OneToOneField('Organisation', on_delete=models.CASCADE, related_name='preferences')
+    trip_stops = models.JSONField(help_text='Trip Stops and Notifications', default=default_steps_config)
     timezone = models.CharField(max_length=50, default='UTC')
     default_language = models.CharField(max_length=10, default='en')
     notification_settings = models.JSONField(default=dict, help_text="Notification preferences")
@@ -154,7 +156,7 @@ class Store(CommonInfo):
     broadcast_radius = models.PositiveIntegerField(default=50, help_text='maximum broadcast radius')
 
     def __str__(self):
-        return f'{self.name} - {self.organisation}'
+        return f'{self.name}'
 
     class Meta:
         constraints = [

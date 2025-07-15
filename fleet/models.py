@@ -120,8 +120,8 @@ class DriverProfile(CommonInfo):
     status = models.CharField(choices=DRIVER_STATUSES, default="available", db_index=True)
     national_id = models.CharField(max_length=50)
 
-    def __str__(self):
-        return f"{self.first_name} {self.last_name} {self.organisation} Driver Profile"
+    # def __str__(self):
+    #     return f"{self.first_name} {self.last_name} {self.organisation} Driver Profile"
 
     class Meta:
         verbose_name = "Driver Profile"

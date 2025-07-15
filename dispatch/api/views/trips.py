@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,9 +6,11 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 
 from dispatch.models import Trip, Order, TripStop
-from dispatch.services.trip_service import TripService
-from fleet.models import Vehicle
-from dispatch.api.serializers.trips import TripSerializer, TripCreationSerializer
+from dispatch.services.trip_service import TripService, TripBuilder
+from dispatch.utils import get_or_create_location
+from fleet.models import Vehicle, DriverProfile
+from dispatch.api.serializers.trips import TripSerializer, TripListSerializer, BasicTripCreationSerializer
+from users.models import Driver
 
 
 class TripViewSet(viewsets.ModelViewSet):
@@ -142,13 +145,66 @@ class TripViewSet(viewsets.ModelViewSet):
 
 class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
     queryset = Trip.objects.all()
-    serializer_class = TripCreationSerializer
+    serializer_class = TripListSerializer
 
-    def create_trip(self, *args, **kwargs):
+    def get_queryset(self):
+        user = self.request.user
+        is_superuser = getattr(user, 'is_superuser', False)
+        org_id = getattr(user, 'organisation_id', None)
+
+        related_fields = ['driver_profile', 'vehicle', 'start_location', 'end_location']
+        fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'status',
+            'completed_time',
+            'estimated_duration',
+            'actual_duration',
+            'planned_geometry',
+            'actual_geometry',
+            'notes',
+            'distance',
+            'start_location__name',
+            'start_location__address',
+            'start_location__coordinates',
+            'end_location__name',
+            'end_location__address',
+            'end_location__coordinates',
+            'driver_profile_id',
+            'driver_profile__first_name',
+            'driver_profile__last_name',
+            'vehicle_id',
+            'vehicle__registration_number',
+            'organisation_id',
+        ]
+        qs = Trip.objects.only(*fields).select_related(*related_fields)
+        if is_superuser:
+            return qs
+        elif org_id:
+            return qs.filter(organisation_id=org_id)
+        else:
+            return qs.none()
+
+    @transaction.atomic()
+    @action(methods=['post'], detail=False, url_path='create', serializer_class=BasicTripCreationSerializer)
+    def create_trip(self, request, *args, **kwargs):
         """
         Create a trip with a driver
+        :param request:
         :param args:
         :param kwargs:
         :return:
         """
+        serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        org = self.request.user.organisation
+        data = serializer.validated_data
+        TripBuilder(
+            organisation=org,
+            driver_profile=data.get('driver_profile'),
+            orders_data=data.get('orders'),
+            start_loc_data=data.get('start_location'),
+            end_loc_data=data.get('end_location'),
+        )
         return Response({'detail': 'Trip created successfully'}, status=status.HTTP_201_CREATED)

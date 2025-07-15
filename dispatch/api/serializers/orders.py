@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from dispatch.models import Order, Location
+from fleet.models import DriverProfile
 from organisations.api.serializers.stores import LocationWrite
 from organisations.models import Store, Customer
 
@@ -28,7 +29,7 @@ class OrderDimensionsSerializer(serializers.Serializer):
 class OrderWriteSerializer(serializers.ModelSerializer):
     pickup = LocationWrite()
     drop_off = LocationWrite()
-    store_key = serializers.CharField(max_length=100, allow_null=True, required=False)
+    store = serializers.CharField(max_length=100, allow_null=True, required=False)
 
     # customer details TODO: Validate required fields
     recipient_name = serializers.CharField(max_length=50)
@@ -58,19 +59,20 @@ class OrderWriteSerializer(serializers.ModelSerializer):
             'recipient_name',
             'recipient_phone_number',
             'recipient_email',
-            'store_key',
+            'store',
             'weight',
             'dimensions',
         ]
         extra_kwargs = {
-            'store': {'read_only': True},
             'organisation': {'read_only': True},
         }
 
     @staticmethod
     def _customer_validation(phone: str = None, email: str = None, field: str = 'recipient'):
         if phone is None and email is None:
-            raise serializers.ValidationError({'detail': _(f'include either {field} phone number or {field} email')})
+            raise serializers.ValidationError(
+                {f'{field}': _(f'Please provide either a phone number or email for the {field}.')}
+            )
 
     @staticmethod
     def _get_or_create_customer(name: str, loc_id: uuid, org_id: str, phone: str = None, email: str = None) -> Customer:
@@ -110,11 +112,6 @@ class OrderWriteSerializer(serializers.ModelSerializer):
         except MultipleObjectsReturned:
             customer = Customer.objects.filter(**lookup).first()
             return customer
-
-    def _get_or_create_location(self, name: str, lat: float, lon: float) -> Location:
-        point = Point(lon, lat)
-        loc, _ = Location.objects.get_or_create(defaults={'name': name, 'coordinates': point})
-        return loc
 
     def _validate_location(self, data, field):
         if isinstance(data, dict):
@@ -158,8 +155,6 @@ class OrderWriteSerializer(serializers.ModelSerializer):
                 org_id=org.id,
             )
             attrs['buyer'] = buyer
-        # update store value
-        attrs['store'] = attrs.pop('store_key', None)
         return super().validate(attrs)
 
     def _get_organisation(self):
@@ -179,7 +174,7 @@ class OrderWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_('order with this reference number exists'))
         return value
 
-    def validate_store_key(self, value):
+    def validate_store(self, value):
         if value:
             org = self._get_organisation()
             store = Store.objects.only('id', 'organisation_id').filter(key=value, organisation_id=org.id).first()
@@ -195,7 +190,76 @@ class OrderWriteSerializer(serializers.ModelSerializer):
         return self._validate_location(data=value, field='drop_off')
 
 
+class LocationMinimSerializer(serializers.ModelSerializer):
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Location
+        fields = ['id', 'name', 'address', 'latitude', 'longitude']
+        ref_name = 'orders'
+
+    def get_latitude(self, obj):
+        return obj.coordinates.y
+
+    def get_longitude(self, obj):
+        return obj.coordinates.x
+
+
+class RecipientMinimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ['id', 'name', 'phone_number', 'email']
+        ref_name = 'orders'
+
+
+class DriverProfileMinimSerializer(serializers.ModelSerializer):
+    phone_number = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DriverProfile
+        fields = ['id', 'first_name', 'last_name', 'phone_number', 'email']
+        ref_name = 'orders'
+
+    def get_phone_number(self, obj):
+        return obj.driver.phone_number
+
+    def get_email(self, obj):
+        return obj.driver.email
+
+
+class StoreMinimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Store
+        fields = ['id', 'name']
+
+
 class OrderListSerializer(serializers.ModelSerializer):
+    pickup = LocationMinimSerializer()
+    drop_off = LocationMinimSerializer()
+    recipient = RecipientMinimSerializer()
+    driver_profile = DriverProfileMinimSerializer()
+    store = StoreMinimSerializer()
+
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'reference_number',
+            'status',
+            'priority',
+            'date_delivered',
+            'date_cancelled',
+            'date_failed',
+            'description',
+            'instructions',
+            'store',
+            'driver_profile',
+            'recipient',
+            'buyer',
+            'pickup',
+            'drop_off',
+        ]
