@@ -217,9 +217,9 @@ class TripStop(CommonInfo):
 
     STOP_TYPE_CHOICES = [
         ('start', 'Start Location'),
-        ('at_store', 'Arrive at Store'),
+        ('at_pickup', 'Arrival at Pickup'),
         ('pickup', 'Pickup'),
-        ('at_drop_off', 'Arrive at Drop Off'),
+        ('at_drop_off', 'Arrival at Drop Off'),
         ('drop_off', 'Dropoff'),
         ('end', 'End Location'),
     ]
@@ -237,6 +237,7 @@ class TripStop(CommonInfo):
     estimated_duration = models.PositiveIntegerField(null=True, blank=True, help_text='Estimated Duration in Seconds')
     # actual_arrival = models.DateTimeField(null=True, blank=True, verbose_name='Actual Arrival Time')
     # started_at = models.DateTimeField(null=True, blank=True, verbose_name='Started At')
+    completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name='Completed At')
     completed_by = models.ForeignKey(
         'fleet.DriverProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_stops'

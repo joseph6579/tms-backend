@@ -27,8 +27,10 @@ class OrderStatusChoices(models.TextChoices):
     SCHEDULED = 'scheduled', 'Scheduled'
     PENDING = 'pending', 'Pending'
     BROADCASTED = 'broadcasted', 'Broadcasted'
-    IN_PROGRESS = 'in_progress', 'In Progress'
-    COMPLETED = 'delivered', 'delivered'
+    AT_STORE = 'at_store', 'At Store'
+    IN_TRANSIT = 'in_transit', 'In Transit'
+    AT_DROP_OFF = 'at_drop_off', 'At Drop Off'
+    COMPLETED = 'delivered', 'Delivered'
     CANCELLED = 'cancelled', 'Cancelled'
     FAILED = 'failed', 'Failed'
 
