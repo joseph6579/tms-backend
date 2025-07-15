@@ -1,16 +1,15 @@
 from django.db import transaction
+from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.utils import timezone
+from rest_framework.response import Response
 
+from dispatch.api.filters.trips import TripsFilter
+from dispatch.api.serializers.trips import TripSerializer, TripListSerializer, BasicTripCreationSerializer
 from dispatch.models import Trip, Order, TripStop
 from dispatch.services.trip_service import TripService, TripBuilder
-from dispatch.utils import get_or_create_location
-from fleet.models import Vehicle, DriverProfile
-from dispatch.api.serializers.trips import TripSerializer, TripListSerializer, BasicTripCreationSerializer
-from users.models import Driver
+from fleet.models import Vehicle
 
 
 class TripViewSet(viewsets.ModelViewSet):
@@ -144,8 +143,9 @@ class TripViewSet(viewsets.ModelViewSet):
 
 
 class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = Trip.objects.all()
     serializer_class = TripListSerializer
+    filterset_class = TripsFilter
+    ordering_fields = ['created_at', 'updated_at', 'completed_time', 'estimated_duration', 'distance']
 
     def get_queryset(self):
         user = self.request.user
