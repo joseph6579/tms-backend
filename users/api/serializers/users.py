@@ -47,3 +47,21 @@ class GoogleResponseSerializer(serializers.Serializer):
     """
 
     code = serializers.CharField(required=True)
+
+
+class OrganisationMinimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Organisation
+        fields = ['id', 'name']
+
+
+class UsersMeSerializer(serializers.ModelSerializer):
+    """
+    Return the details of the currently logged in user
+    """
+
+    organisation = OrganisationMinimSerializer()
+
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'email', 'is_active', 'is_master_user', 'role', 'organisation']

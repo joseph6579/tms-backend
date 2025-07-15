@@ -12,12 +12,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import action
 
 from users.api.serializers.users import (
     UserCreateSerializer,
     UserSerializer,
     UserMiniSerializer,
     GoogleResponseSerializer,
+    UsersMeSerializer,
 )
 from users.tasks import send_user_registration_email
 from users.utils import generate_random_string
@@ -32,6 +34,15 @@ class UsersModelViewset(ModelViewSet):
     def get_serializer_class(self):
         serializers = {'create': UserCreateSerializer}
         return serializers.get(self.action, super().get_serializer_class())
+
+    @action(methods=['get'], detail=False)
+    def me(self, request, *args, **kwargs):
+        """
+        Return the current user data
+        """
+        user = request.user
+        data = UsersMeSerializer(instance=user).data
+        return Response({'detail': data}, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         data = request.data
