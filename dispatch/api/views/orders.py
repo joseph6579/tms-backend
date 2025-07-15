@@ -13,6 +13,58 @@ class OrderManagementViewset(ReadOnlyModelViewSet):
     serializer_class = OrderListSerializer
     # TODO: Optimize the queryset
 
+    def get_queryset(self):
+        user = self.request.user
+        is_superuser = getattr(user, 'is_superuser', False)
+        org_id = getattr(user, 'organisation_id', None)
+
+        related_fields = ['driver_profile', 'recipient', 'pickup', 'drop_off', 'store', 'buyer']
+        fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'reference_number',
+            'status',
+            'priority',
+            'date_delivered',
+            'date_cancelled',
+            'date_failed',
+            'description',
+            'instructions',
+            'driver_profile__id',
+            'driver_profile__first_name',
+            'driver_profile__last_name',
+            'driver_profile__driver__phone_number',
+            'driver_profile__driver__email',
+            'recipient__id',
+            'recipient__name',
+            'recipient__email',
+            'recipient__phone_number',
+            'buyer__id',
+            'buyer__name',
+            'buyer__email',
+            'buyer__phone_number',
+            'store__id',
+            'store__name',
+            'pickup__id',
+            'pickup__name',
+            'pickup__address',
+            'pickup__coordinates',
+            'drop_off__id',
+            'drop_off__name',
+            'drop_off__address',
+            'drop_off__coordinates',
+            'organisation_id',
+            'trip_id',
+        ]
+        qs = Order.objects.only(*fields).select_related(*related_fields)
+        if is_superuser:
+            return qs
+        elif org_id:
+            return qs.filter(organisation_id=org_id)
+        else:
+            return qs.none()
+
     @action(['post'], detail=False, url_path='create', serializer_class=OrderWriteSerializer)
     def create_order(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())

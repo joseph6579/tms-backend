@@ -3,9 +3,9 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from commons.constants import OrderStatusChoices
-from dispatch.models import Trip, TripStop, Order
+from dispatch.models import Trip, TripStop, Order, Location
 from dispatch.api.serializers.orders_old import OrderSerializer
-from fleet.models import DriverProfile
+from fleet.models import DriverProfile, Vehicle
 from users.api.serializers.users import UserMiniSerializer
 
 
@@ -37,10 +37,65 @@ class TripSerializer(serializers.ModelSerializer):
         return data
 
 
-class TripCreationSerializer(serializers.ModelSerializer):
+class LocationMinimSerializer(serializers.ModelSerializer):
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Location
+        fields = ['id', 'name', 'address', 'latitude', 'longitude']
+        ref_name = 'trips'
+
+    def get_latitude(self, obj):
+        return obj.coordinates.y
+
+    def get_longitude(self, obj):
+        return obj.coordinates.x
+
+
+class DriverProfileMinimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DriverProfile
+        fields = [
+            'id',
+            'first_name',
+            'last_name',
+        ]
+        ref_name = 'trips'
+
+
+class VehicleMinimSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['id', 'registration_number']
+
+
+class TripListSerializer(serializers.ModelSerializer):
+    start_location = LocationMinimSerializer()
+    end_location = LocationMinimSerializer()
+    driver_profile = DriverProfileMinimSerializer()
+    vehicle = VehicleMinimSerializer()
+
     class Meta:
         model = Trip
-        fields = '__all__'
+        # fields = '__all__'
+        fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'status',
+            'completed_time',
+            'estimated_duration',
+            'actual_duration',
+            'planned_geometry',
+            'actual_geometry',
+            'notes',
+            'distance',
+            'driver_profile',
+            'vehicle',
+            'start_location',
+            'end_location',
+        ]
 
 
 class LocationForTrip(serializers.Serializer):

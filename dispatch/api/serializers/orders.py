@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from dispatch.models import Order, Location
+from fleet.models import DriverProfile
 from organisations.api.serializers.stores import LocationWrite
 from organisations.models import Store, Customer
 
@@ -202,6 +203,7 @@ class LocationMinimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = ['id', 'name', 'address', 'latitude', 'longitude']
+        ref_name = 'orders'
 
     def get_latitude(self, obj):
         return obj.coordinates.y
@@ -214,13 +216,50 @@ class RecipientMinimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['id', 'name', 'phone_number', 'email']
+        ref_name = 'orders'
+
+
+class DriverProfileMinimSerializer(serializers.ModelSerializer):
+    phone_number = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DriverProfile
+        fields = ['id', 'first_name', 'last_name', 'phone_number', 'email']
+        ref_name = 'orders'
+
+    def get_phone_number(self, obj):
+        return obj.driver.phone_number
+
+    def get_email(self, obj):
+        return obj.driver.email
 
 
 class OrderListSerializer(serializers.ModelSerializer):
     pickup = LocationMinimSerializer()
     drop_off = LocationMinimSerializer()
     recipient = RecipientMinimSerializer()
+    driver_profile = DriverProfileMinimSerializer()
 
     class Meta:
         model = Order
-        fields = '__all__'
+        # fields = '__all__'
+        fields = [
+            'id',
+            'created_at',
+            'updated_at',
+            'reference_number',
+            'status',
+            'priority',
+            'date_delivered',
+            'date_cancelled',
+            'date_failed',
+            'description',
+            'instructions',
+            'store',
+            'driver_profile',
+            'recipient',
+            'buyer',
+            'pickup',
+            'drop_off',
+        ]

@@ -217,7 +217,9 @@ class TripStop(CommonInfo):
 
     STOP_TYPE_CHOICES = [
         ('start', 'Start Location'),
+        ('at_store', 'Arrive at Store'),
         ('pickup', 'Pickup'),
+        ('at_drop_off', 'Arrive at Drop Off'),
         ('drop_off', 'Dropoff'),
         ('end', 'End Location'),
     ]
@@ -229,7 +231,7 @@ class TripStop(CommonInfo):
         'fleet.DriverProfile', null=True, blank=True, related_name='stops', on_delete=models.SET_NULL
     )
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='stops')
-    stop_type = models.CharField(max_length=10, choices=STOP_TYPE_CHOICES, default='pickup')
+    stop_type = models.CharField(max_length=20, choices=STOP_TYPE_CHOICES, default='pickup')
     sequence = models.PositiveIntegerField()
     # eta = models.DateTimeField(null=True, blank=True, verbose_name='Estimated Time of Arrival')
     estimated_duration = models.PositiveIntegerField(null=True, blank=True, help_text='Estimated Duration in Seconds')
