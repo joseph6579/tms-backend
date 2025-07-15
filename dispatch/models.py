@@ -2,7 +2,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.gis.db import models as geomodels
 from commons.behaviour import CommonInfo
-from commons.constants import OrderStatusChoices
+from dispatch.constants import OrderStatusChoices, TripStopTypesChoices
 from uuid import uuid4
 
 
@@ -215,15 +215,6 @@ class TripStop(CommonInfo):
     Model to represent a stop in a trip.
     """
 
-    STOP_TYPE_CHOICES = [
-        ('start', 'Start Location'),
-        ('at_pickup', 'Arrival at Pickup'),
-        ('pickup', 'Pickup'),
-        ('at_drop_off', 'Arrival at Drop Off'),
-        ('drop_off', 'Dropoff'),
-        ('end', 'End Location'),
-    ]
-
     id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stops')
     order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL, related_name='stops')
@@ -231,18 +222,14 @@ class TripStop(CommonInfo):
         'fleet.DriverProfile', null=True, blank=True, related_name='stops', on_delete=models.SET_NULL
     )
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='stops')
-    stop_type = models.CharField(max_length=20, choices=STOP_TYPE_CHOICES, default='pickup')
+    stop_type = models.CharField(max_length=20, choices=TripStopTypesChoices, default='pickup')
     sequence = models.PositiveIntegerField()
-    # eta = models.DateTimeField(null=True, blank=True, verbose_name='Estimated Time of Arrival')
     estimated_duration = models.PositiveIntegerField(null=True, blank=True, help_text='Estimated Duration in Seconds')
-    # actual_arrival = models.DateTimeField(null=True, blank=True, verbose_name='Actual Arrival Time')
-    # started_at = models.DateTimeField(null=True, blank=True, verbose_name='Started At')
     completed = models.BooleanField(default=False)
     completed_at = models.DateTimeField(null=True, blank=True, verbose_name='Completed At')
     completed_by = models.ForeignKey(
         'fleet.DriverProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_stops'
     )
-    # status = models.CharField(max_length=20, choices=STOP_STATUS_CHOICES, default='pending', verbose_name='Stop Status')
     notes = models.TextField(blank=True, null=True, verbose_name='Notes')
 
     def __str__(self):

@@ -2,7 +2,7 @@ from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 
-from commons.constants import OrderStatusChoices
+from dispatch.constants import OrderStatusChoices
 from dispatch.models import Trip, TripStop, Order, Location
 from dispatch.api.serializers.orders_old import OrderSerializer
 from fleet.models import DriverProfile, Vehicle

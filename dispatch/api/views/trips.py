@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 
 from dispatch.models import Trip, Order, TripStop
-from dispatch.services.trip_service import TripService
+from dispatch.services.trip_service import TripService, TripBuilder
 from dispatch.utils import get_or_create_location
 from fleet.models import Vehicle, DriverProfile
 from dispatch.api.serializers.trips import TripSerializer, TripListSerializer, BasicTripCreationSerializer
@@ -198,95 +198,13 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
         """
         serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
-        """
-        1. Lock all order rows
-        2. Create trip
-        3. Create trip steps
-        4. Update order status to assigned
-        5. Update driver profile status to busy
-        6. Unlock rows
-        """
-        data = serializer.validated_data
-        order_data = data.get('orders')
-        driver_profile_id = serializer.data.get('driver_profile', None)
-        driver_profile = (
-            DriverProfile.objects.only('id', 'vehicle_id').get(id=driver_profile_id) if driver_profile_id else None
-        )
         org = self.request.user.organisation
-        vehicle = driver_profile.vehicle if driver_profile else None
-        trip_status = 'assigned' if driver_profile else 'pending'
-        start_location_data = data.get('start_location', None)
-        end_location_data = data.get('end_location', None)
-        start_location = get_or_create_location(organisation_id=org.id, **start_location_data)
-        end_location = (
-            get_or_create_location(organisation_id=org.id, **end_location_data) if end_location_data else None
-        )
-
-        trip = Trip.objects.create(
-            driver_profile=driver_profile,
-            vehicle=vehicle,
+        data = serializer.validated_data
+        TripBuilder(
             organisation=org,
-            status=trip_status,
-            start_location=start_location,
-            end_location=end_location,
+            driver_profile=data.get('driver_profile'),
+            orders_data=data.get('orders'),
+            start_loc_data=data.get('start_location'),
+            end_loc_data=data.get('end_location'),
         )
-        # TODO: Check which trip stops are activated
-        # manually create the trip stops
-        # 1. Create start and end trip steps
-        start_stop = TripStop.objects.create(
-            trip=trip, driver_profile_id=driver_profile_id, location=start_location, sequence=1, stop_type='start'
-        )
-        end_stop = TripStop.objects.create(
-            trip=trip, driver_profile_id=driver_profile_id, location=start_location, sequence=0, stop_type='end'
-        )
-        step_sequence = 1
-        order_ids = []
-        for order in order_data:
-            # print(f'Order {order}')
-            order_id = order.get('id')  # uuid
-            order_ids.append(order_id)
-            pickup_location = get_or_create_location(organisation_id=org.id, **order.get('origin'))
-            # create pickup steps
-            TripStop.objects.create(
-                trip=trip,
-                driver_profile_id=driver_profile_id,
-                location=pickup_location,
-                sequence=step_sequence + 1,
-                stop_type='at_store',
-                order_id=order_id,
-            )
-            TripStop.objects.create(
-                trip=trip,
-                driver_profile_id=driver_profile_id,
-                location=pickup_location,
-                sequence=step_sequence + 2,
-                stop_type='pickup',
-                order_id=order_id,
-            )
-            drop_off_location = get_or_create_location(organisation_id=org.id, **order.get('drop_off'))
-            TripStop.objects.create(
-                trip=trip,
-                driver_profile_id=driver_profile_id,
-                location=drop_off_location,
-                sequence=step_sequence + 3,
-                stop_type='at_drop_off',
-                order_id=order_id,
-            )
-            TripStop.objects.create(
-                trip=trip,
-                driver_profile_id=driver_profile_id,
-                location=drop_off_location,
-                sequence=step_sequence + 4,
-                stop_type='drop_off',
-                order_id=order_id,
-            )
-            step_sequence += 4
-
-        step_sequence += 1
-        end_stop.sequence = step_sequence
-        end_stop.save(update_fields=['sequence'])
-
-        # update orders
-        orders = Order.objects.filter(id__in=order_ids).only('status', 'trip_id', 'driver_profile_id')
-        orders.update(status='assigned', trip_id=trip.id, driver_profile_id=driver_profile_id)
         return Response({'detail': 'Trip created successfully'}, status=status.HTTP_201_CREATED)

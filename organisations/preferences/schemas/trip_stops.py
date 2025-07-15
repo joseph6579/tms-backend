@@ -22,5 +22,24 @@ class Steps(BaseModel):
     drop_off: StepConfig
 
 
-def default_steps_config():
-    return Steps().model_dump()
+def default_step_config(sequence: int) -> StepConfig:
+    return StepConfig(
+        is_active=True,
+        sequence=sequence,
+        notifications=StepNotification(
+            order_webhook=True,
+            recipient_sms=False,
+            recipient_email=False,
+            buyer_email=True,
+            buyer_sms=False,
+        ),
+    )
+
+
+def default_steps_config() -> dict:
+    return Steps(
+        arrived_at_store=default_step_config(1),
+        pickup=default_step_config(2),
+        arrived_at_destination=default_step_config(3),
+        drop_off=default_step_config(4),
+    ).model_dump()
