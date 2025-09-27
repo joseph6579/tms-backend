@@ -7,7 +7,7 @@ from datetime import timedelta
 import uuid
 
 from organisations.models import OrganisationSubscription, Package
-from organisations.api.serializers.organisations import OrganisationSubscriptionSerializer
+from organisations.api.serializers.subscriptions import OrganisationSubscriptionSerializer
 from organisations.services.paystack import PaystackService
 from organisations.permissions import IsOrganisationAdmin
 

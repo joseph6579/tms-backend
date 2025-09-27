@@ -48,6 +48,8 @@ class CustomUser(AbstractUser):
             ).exists()
         return False
 
+
+# TODO: Explore a better way to handle this - should drivers be users? Or a separate entity?
 class Driver(CustomUser):
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     status = models.CharField(max_length=10, default='active', choices=DRIVER_STATUSES)

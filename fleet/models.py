@@ -18,7 +18,6 @@ PAYMENT_MODEL_TYPES = (
 
 class DriverGroup(CommonInfo):
     """Model to group drivers with similar payment terms"""
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     organisation = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='driver_groups')
@@ -61,8 +60,8 @@ class DriverGroup(CommonInfo):
         unique_together = ['organisation', 'name']
         ordering = ['name']
 
+
 class Vehicle(CommonInfo):
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     registration_number = models.CharField(max_length=20, unique=True)
     driver = models.OneToOneField('users.Driver', on_delete=models.CASCADE, null=True, blank=True, related_name='vehicle')
     source = models.CharField(max_length=11, choices=VEHICLE_SOURCES, default='in_house')
@@ -83,9 +82,9 @@ class Vehicle(CommonInfo):
     def __str__(self):
         return self.registration_number
 
+
 class PaymentModel(CommonInfo):
     """Model to define how drivers are paid"""
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     organisation = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='payment_models')
     name = models.CharField(max_length=100)
     model_type = models.CharField(max_length=20, choices=PAYMENT_MODEL_TYPES)
@@ -162,9 +161,9 @@ class PaymentModel(CommonInfo):
         verbose_name_plural = 'Payment Models'
         unique_together = ['organisation', 'name']
 
+
 class DriverPayment(CommonInfo):
     """Model to track driver payments"""
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     driver = models.ForeignKey('users.Driver', on_delete=models.CASCADE, related_name='payments')
     driver_group = models.ForeignKey(DriverGroup, on_delete=models.PROTECT, related_name='payments')
     payment_model = models.ForeignKey(PaymentModel, on_delete=models.PROTECT)
@@ -201,9 +200,9 @@ class DriverPayment(CommonInfo):
         verbose_name_plural = 'Driver Payments'
         ordering = ['-period_end']
 
+
 class PaymentDeduction(CommonInfo):
     """Model to track deductions from driver payments"""
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     payment = models.ForeignKey(DriverPayment, on_delete=models.CASCADE, related_name='deduction_records')
     description = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -224,8 +223,8 @@ class PaymentDeduction(CommonInfo):
         verbose_name = 'Payment Deduction'
         verbose_name_plural = 'Payment Deductions'
 
+
 class VehicleAssignmentLogs(CommonInfo):
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     vehicle = models.ForeignKey('fleet.Vehicle', on_delete=models.CASCADE)
     driver = models.ForeignKey('users.Driver', on_delete=models.CASCADE, related_name='vehicle_assignments')
     assigned_by = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE, related_name='user_vehicle_assignments')

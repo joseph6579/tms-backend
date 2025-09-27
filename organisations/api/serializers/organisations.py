@@ -1,62 +1,57 @@
 from django.contrib.auth import get_user_model
-from django.utils.crypto import get_random_string
 from rest_framework import serializers
+from pydantic import ValidationError
 
-from organisations.models import Organisation, Package, OrganisationSubscription, OrganisationPreferences
 
-User = get_user_model()
 
-class PackageSerializer(serializers.ModelSerializer):
+class OrganisationRegistrationSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    email = serializers.EmailField()
+    phone_number = serializers.CharField()
+
+    def validate_email(self, value):
+        user_model = get_user_model()
+        if user_model.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+
+class OrganisationRedactedSerializer(serializers.ModelSerializer):
+    configuration_id = serializers.UUIDField(source='configuration.id', read_only=True)
     class Meta:
-        model = Package
-        fields = '__all__'
+        from organisations.models import Organisation  # Avoid circular import
 
-class OrganisationSubscriptionSerializer(serializers.ModelSerializer):
+        model = Organisation
+        fields = ['id', 'name', 'email', 'phone_number', 'created_at', 'updated_at', 'configuration_id']
+
+
+class OrganisationUpdateSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    email = serializers.EmailField()
+    phone_number = serializers.CharField()
+
+
+
+class OrganisationDetailSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OrganisationSubscription
-        fields = '__all__'
-        read_only_fields = ['payment_reference']
+        from organisations.models import Organisation
 
-class OrganisationPreferencesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrganisationPreferences
-        fields = '__all__'
-
-class OrganisationSerializer(serializers.ModelSerializer):
-    preferences = OrganisationPreferencesSerializer(read_only=True)
-    active_subscription = serializers.SerializerMethodField()
-
-    class Meta:
         model = Organisation
         fields = '__all__'
 
-    def get_active_subscription(self, obj):
-        subscription = obj.subscriptions.filter(is_active=True).first()
-        if subscription:
-            return OrganisationSubscriptionSerializer(subscription).data
-        return None
 
-    def create(self, validated_data):
-        email = validated_data.get('email')
-        user = None
+class OrganisationOrderConfigurationSerializer(serializers.Serializer):
+    config = serializers.JSONField()
+
+    def validate_config(self, value):
+        from commons.constants import OrderStatusConfiguration
         try:
-            user = User.objects.get(email=email)
-            if user:
-                raise serializers.ValidationError('User with email already exists')
-        except User.DoesNotExist:
-            user = User.objects.create_user(
-                email=email,
-                first_name=validated_data.get('name'),
-                last_name='Admin'
-            )
-            organisation = Organisation.objects.create(**validated_data)
-            
-            # Create default preferences
-            OrganisationPreferences.objects.create(organisation=organisation)
-            
-            pwd = get_random_string(length=10)
-            user.set_password(pwd)
-            user.organisation = organisation
-            user.save()
-            # TODO: Send email with credentials
-        return organisation
+            OrderStatusConfiguration.model_validate(value)
+        except ValidationError as e:
+            err_dict = e.errors()
+            msg = err_dict[0]['ctx']['error'] if 'ctx' in err_dict[0] else 'Invalid configuration'
+            raise serializers.ValidationError(msg)
+        except Exception as e:
+            print(type(e))
+            raise serializers.ValidationError(str(e))
+        return value

@@ -9,7 +9,6 @@ class Location(CommonInfo):
     """
     Model to represent a geographical location in the dispatch system.
     """
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     name = models.CharField(max_length=100, verbose_name='Location Name')
     description = models.TextField(blank=True, null=True, verbose_name='Description')
     coordinates = geomodels.PointField(verbose_name='Coordinates')
@@ -37,7 +36,6 @@ class Customer(CommonInfo):
     """
     Model to represent a customer in the dispatch system.
     """
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     name = models.CharField(max_length=100, verbose_name='Customer Name')
     email = models.EmailField(verbose_name='Email Address', blank=True, null=True)
     phone_number = models.CharField(max_length=15, verbose_name='Phone Number', blank=True, null=True)
@@ -64,7 +62,6 @@ class Trip(CommonInfo):
     """
     Model to represent a trip in the dispatch system.
     """
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     driver = models.ForeignKey('users.Driver', on_delete=models.SET_NULL, verbose_name='Driver', null=True, blank=True)
     vehicle = models.ForeignKey('fleet.Vehicle', on_delete=models.SET_NULL, verbose_name='Vehicle', null=True, blank=True)
     status = models.CharField(max_length=20, default='scheduled', verbose_name='Trip Status')
@@ -90,11 +87,11 @@ class Trip(CommonInfo):
             models.Index(fields=['scheduled_start_time']),
         ]
 
+
 class Order(CommonInfo):
     """
     Model to represent an order in the dispatch system.
     """
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     reference = models.CharField(max_length=100, verbose_name='Order Reference', unique=True)
     status = models.CharField(
         max_length=20,
@@ -178,6 +175,7 @@ class Order(CommonInfo):
             models.Index(fields=['scheduled_date']),
         ]
 
+
 class TripStop(CommonInfo):
     """
     Model to represent a stop in a trip.
@@ -197,7 +195,6 @@ class TripStop(CommonInfo):
         ('failed', 'Failed'),
     ]
 
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL, related_name='stops')
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stops')
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='stops')
@@ -234,11 +231,11 @@ class TripStop(CommonInfo):
             models.Index(fields=['status']),
         ]
 
+
 class OrderReview(CommonInfo):
     """
     Model to store order reviews and ratings
     """
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='reviews')
     driver = models.ForeignKey('users.Driver', on_delete=models.CASCADE, related_name='order_reviews')
     rating = models.PositiveIntegerField(
