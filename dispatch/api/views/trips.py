@@ -5,9 +5,12 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 
 from dispatch.models import Trip, Order, TripStop
-from dispatch.services.trip_service import TripService
+from dispatch.services import trip_service
+from dispatch.services.trip_service import TripService, trip_svc
 from fleet.models import Vehicle
 from dispatch.api.serializers.trips import TripSerializer
+from organisations.models import Organisation
+
 
 class TripViewSet(viewsets.ModelViewSet):
     serializer_class = TripSerializer
@@ -175,3 +178,9 @@ class TripViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(trip)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='active-steps')
+    def active_steps(self, request, *args, **kwargs):
+        org = Organisation.objects.first()
+        steps = trip_svc.fetch_stops_configuration(org=org)
+        return Response(steps)

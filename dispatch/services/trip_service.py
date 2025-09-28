@@ -1,14 +1,60 @@
-from datetime import datetime
 from typing import List, Optional
-import requests
-from django.conf import settings
+
 from django.utils import timezone
 
+from commons.constants import OrderStatusConfiguration, TripStopTypeChoices
 from dispatch.models import Trip, TripStop, Order, Location
 from fleet.models import Vehicle
+from organisations.models import Organisation
 from users.models import Driver
 
+
 class TripService:
+
+    @staticmethod
+    def fetch_stops_configuration(org: Organisation) -> dict:
+        """
+        Fetches the stops configuration for the given organization. The method processes the
+        organization's order status configuration, identifying active statuses that are designated
+        as trip stops. It extracts notifications, service level agreements (SLA), and other
+        relevant details for each active stop and organizes the data by stop type (e.g. pickup,
+        dropoff).
+
+        :param org: Organisation instance containing configuration details.
+        :type org: Organisation
+        :return: A dictionary with trip stop types as keys (e.g., pickup, dropoff) and lists
+                 of active stop details as values.
+        :rtype: dict
+        """
+        status_conf_json = org.configuration.order_status_configuration
+        status_conf_model = OrderStatusConfiguration(**status_conf_json)
+
+        result = {}
+        result[TripStopTypeChoices.PICKUP.value] = []
+        result[TripStopTypeChoices.DROPOFF.value] = []
+        for field_name, field in status_conf_model.model_fields.items():
+            alias = field.alias
+            status_obj = getattr(status_conf_model, field_name)
+            if status_obj.is_active and status_obj.is_trip_stop:
+                notifications = status_obj.notifications.model_dump() if status_obj.notifications else None
+                sla = status_obj.sla.model_dump() if status_obj.sla else None
+                stop_type = status_obj.stop_type
+                result[stop_type].append({'stop': alias, 'notifications': notifications, 'sla': sla})
+        return result
+
+    def construct_trip_step_data(self):
+        """
+        1. Fetch the organization's stop configuration using fetch_stops_configuration.
+        2. For each trip, iterate through its stops and match the stop type with the
+           configuration to gather relevant notifications and SLA details.
+        3. Compile a structured representation of each trip's stops, including the stop type,
+           associated notifications, and SLA information.
+        :return:
+        """
+        pass
+
+
+
     @staticmethod
     def format_orders_for_optimization(orders: List[Order], vehicles: List[Vehicle]) -> dict:
         """Format orders and vehicles for the optimization engine"""
@@ -51,6 +97,7 @@ class TripService:
     def create_trip_from_optimization(
         optimization_result: dict,
         orders: List[Order],
+        organization: Organisation,
         driver: Optional[Driver] = None
     ) -> Optional[Trip]:
         """Create a trip from optimization engine result"""
@@ -81,6 +128,7 @@ class TripService:
 
             # Create trip
             trip = Trip.objects.create(
+                organization=organization,
                 vehicle_id=vehicle_id,
                 driver=driver,
                 start_location=start_location,
@@ -224,3 +272,6 @@ class TripService:
         order.trip = None
         order.driver = None
         order.save()
+
+
+trip_svc = TripService()

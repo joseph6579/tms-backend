@@ -62,6 +62,7 @@ class Trip(CommonInfo):
     """
     Model to represent a trip in the dispatch system.
     """
+    organization = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='trips')
     driver = models.ForeignKey('users.Driver', on_delete=models.SET_NULL, verbose_name='Driver', null=True, blank=True)
     vehicle = models.ForeignKey('fleet.Vehicle', on_delete=models.SET_NULL, verbose_name='Vehicle', null=True, blank=True)
     status = models.CharField(max_length=20, default='scheduled', verbose_name='Trip Status')

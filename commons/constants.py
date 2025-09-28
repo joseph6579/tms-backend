@@ -17,6 +17,11 @@ class OrderStatusChoices(models.TextChoices):
     FAILED = 'failed', 'Failed'
 
 
+class TripStopTypeChoices(models.TextChoices):
+    PICKUP = 'pickup', 'Pickup'
+    DROPOFF = 'delivery', 'Drop-off'
+
+
 class StatusNotificationConfig(BaseModel):
     send_webhook: bool = False
     send_store_email: bool = False
@@ -34,48 +39,49 @@ class StatusSLAConfig(BaseModel):
 class StatusCombinedConfig(BaseModel):
     is_active: bool = False
     is_trip_stop: bool = False
+    stop_type: Optional[str] = None  # e.g., 'PICKUP' or 'DROPOFF'
     notifications: Optional[StatusNotificationConfig] = None
     sla: Optional[StatusSLAConfig] = None
 
 
 class OrderStatusConfiguration(BaseModel):
     SCHEDULED: StatusCombinedConfig = Field(
-        default=StatusCombinedConfig(is_active=False),
+        default_factory=lambda: StatusCombinedConfig(is_active=False),
         description='Order is scheduled for pickup',
         alias=OrderStatusChoices.SCHEDULED.value
     )
     PENDING: StatusCombinedConfig = Field(
-        default=StatusCombinedConfig(is_active=True),
+        default_factory=lambda: StatusCombinedConfig(is_active=True),
         description='Order is pending and waiting for driver assignment',
         alias=OrderStatusChoices.PENDING.value
     )
     BROADCASTED: StatusCombinedConfig = Field(
-        default=StatusCombinedConfig(is_active=True),
+        default_factory=lambda: StatusCombinedConfig(is_active=True),
         description='Order has been broadcasted to drivers',
         alias=OrderStatusChoices.BROADCASTED.value
     )
     ASSIGNED: StatusCombinedConfig = Field(
-        default=StatusCombinedConfig(is_active=True),
+        default_factory=lambda: StatusCombinedConfig(is_active=True),
         description='Order has been assigned to a driver',
         alias=OrderStatusChoices.ASSIGNED.value
     )
     IN_PROGRESS: StatusCombinedConfig = Field(
-        default=StatusCombinedConfig(is_active=True, is_trip_stop=True),
+        default_factory=lambda: StatusCombinedConfig(is_active=True, is_trip_stop=True, stop_type=TripStopTypeChoices.PICKUP.value),
         description='Order is currently being delivered',
         alias=OrderStatusChoices.IN_PROGRESS.value
     )
     ARRIVED_AT_PICKUP: StatusCombinedConfig = Field(
-        default=StatusCombinedConfig(is_active=False, is_trip_stop=True),
+        default_factory=lambda: StatusCombinedConfig(is_active=False, is_trip_stop=True, stop_type=TripStopTypeChoices.PICKUP.value),
         description='Driver has arrived at the pickup location',
         alias=OrderStatusChoices.ARRIVED_AT_PICKUP.value
     )
     ARRIVED_AT_DROP_OFF: StatusCombinedConfig = Field(
-        default=StatusCombinedConfig(is_active=False, is_trip_stop=True),
+        default_factory=lambda: StatusCombinedConfig(is_active=False, is_trip_stop=True, stop_type=TripStopTypeChoices.DROPOFF.value),
         description='Driver has arrived at the drop-off location',
         alias=OrderStatusChoices.ARRIVED_AT_DROP_OFF.value
     )
     COMPLETED: StatusCombinedConfig = Field(
-        default=StatusCombinedConfig(is_active=True, is_trip_stop=True),
+        default_factory=lambda: StatusCombinedConfig(is_active=True, is_trip_stop=True, stop_type=TripStopTypeChoices.DROPOFF.value),
         description='Order has been successfully delivered',
         alias=OrderStatusChoices.COMPLETED.value
     )
@@ -113,6 +119,14 @@ class OrderStatusConfiguration(BaseModel):
 
         return self
 
+    @model_validator(mode="after")
+    def assign_stop_types(self):
+        self.IN_PROGRESS.stop_type = TripStopTypeChoices.PICKUP.value
+        self.ARRIVED_AT_PICKUP.stop_type = TripStopTypeChoices.PICKUP.value
+        self.COMPLETED.stop_type = TripStopTypeChoices.DROPOFF.value
+        self.ARRIVED_AT_DROP_OFF.stop_type = TripStopTypeChoices.DROPOFF.value
+
+        return self
 
 class TimezoneChoices(models.TextChoices):
     UTC = 'UTC', 'UTC'
