@@ -15,6 +15,7 @@ class DriverStatusChoices(models.TextChoices):
     OFFLINE = 'offline', 'Offline'
     BUSY = 'busy', 'Busy'
     AVAILABLE = 'available', 'available'
+    INACTIVE = 'inactive', 'Inactive'
 
 
 class OrderStatusChoices(models.TextChoices):
@@ -29,24 +30,44 @@ class OrderStatusChoices(models.TextChoices):
     CANCELLED = 'cancelled', 'Cancelled'
     FAILED = 'failed', 'Failed'
 
-    @staticmethod
-    def final_statues():
-        return[
-            OrderStatusChoices.COMPLETED.value,
-            OrderStatusChoices.CANCELLED.value,
-            OrderStatusChoices.FAILED.value,
-            ]
-
-    @staticmethod
-    def assignable_statuses():
+    @classmethod
+    def final_statuses(cls):
         return [
-            OrderStatusChoices.PENDING.value,
+            cls.COMPLETED.value,
+            cls.CANCELLED.value,
+            cls.FAILED.value,
+        ]
+
+    @classmethod
+    def assignable_statuses(cls):
+        return [
+            cls.PENDING.value,
         ]
 
 
 class TripStopTypeChoices(models.TextChoices):
     PICKUP = 'pickup', 'Pickup'
     DROPOFF = 'delivery', 'Drop-off'
+    AT_PICKUP = 'arrived_at_pickup', 'At Pickup'
+    AT_DROP_OFF = 'arrived_at_drop_off', 'At Drop-off'
+    START = 'start', 'Start'
+    END = 'end', 'End'
+
+
+class TripStatusChoices(models.TextChoices):
+    SCHEDULED = 'scheduled', 'Scheduled'
+    COMPLETED = 'completed', 'Completed'
+    ON_GOING = 'on_going', 'On Going'
+    PENDING = 'pending', 'Pending'
+    ASSIGNED = 'assigned', 'Assigned'
+
+    @classmethod
+    def incomplete_statuses(cls):
+        return [
+            cls.ON_GOING.value,
+            cls.PENDING.value,
+            cls.ASSIGNED.value,
+        ]
 
 
 class StatusNotificationConfig(BaseModel):

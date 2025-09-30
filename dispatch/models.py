@@ -2,7 +2,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.contrib.gis.db import models as geomodels
 from commons.behaviour import CommonInfo
-from dispatch.constants import OrderStatusChoices, TripStopTypesChoices
+from commons.constants import TripStopTypeChoices, OrderStatusChoices, TripStatusChoices
 from uuid import uuid4
 
 
@@ -39,45 +39,11 @@ class Location(CommonInfo):
         ]
 
 
-class Customer(CommonInfo):
-    """
-    Model to represent a customer in the dispatch system.
-    """
-    name = models.CharField(max_length=100, verbose_name='Customer Name')
-    email = models.EmailField(verbose_name='Email Address', blank=True, null=True)
-    phone_number = models.CharField(max_length=15, verbose_name='Phone Number', blank=True, null=True)
-    location = models.ForeignKey(Location, on_delete=models.PROTECT, verbose_name='Location', related_name='customers',
-                               null=True, blank=True)
-    organization = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='customers')
-    is_active = models.BooleanField(default=True, verbose_name='Is Active')
-    notes = models.TextField(blank=True, null=True, verbose_name='Notes')
-
-    def __str__(self):
-        return f"{self.name} ({self.email})"
-
-    class Meta:
-        verbose_name = 'Customer'
-        verbose_name_plural = 'Customers'
-        ordering = ['name']
-        indexes = [
-            models.Index(fields=['name']),
-            models.Index(fields=['email']),
-            models.Index(fields=['phone_number']),
-        ]
-
-
 class Trip(CommonInfo):
     """
     Model to represent a trip in the dispatch system.
     """
-    STATUS_CHOICES = [
-        ('scheduled', 'scheduled'),
-        ('pending', 'pending'),
-        ('on_going', 'on_going'),
-        ('complete', 'complete'),
-    ]
-    
-    status = models.CharField(max_length=20, default='scheduled', verbose_name='Trip Status', null=True, blank=True)
+    status = models.CharField(max_length=20, choices=TripStatusChoices.choices, default=TripStatusChoices.PENDING, verbose_name='Trip Status', null=True, blank=True)
     start_point = geomodels.PointField(verbose_name='Start Point Coordinates', null=True, blank=True)
     end_point = geomodels.PointField(verbose_name='End Point Coordinates', null=True, blank=True)
     scheduled_start_time = models.DateTimeField(verbose_name='Scheduled Start Time')
@@ -202,18 +168,6 @@ class Order(CommonInfo):
         verbose_name = 'Order'
         verbose_name_plural = 'Orders'
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['reference_number']),
-            models.Index(fields=['reference_number', 'organisation']),
-            models.Index(fields=['status']),
-            models.Index(fields=['status', 'created_at']),
-            models.Index(fields=['status', 'date_delivered']),
-            models.Index(fields=['scheduled_date']),
-            models.Index(fields=['trip']),
-            models.Index(fields=['organisation']),
-            models.Index(fields=['organisation', 'status']),
-            models.Index(fields=['organisation', 'driver_profile']),
-        ]
         constraints = [
             models.UniqueConstraint(fields=['reference_number', 'organisation'], name='unique_ref_number_org')
         ]
@@ -226,7 +180,7 @@ class TripStop(CommonInfo):
     order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL, related_name='stops')
     coordinates = geomodels.PointField(verbose_name='coordinates', null=True, blank=True)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stops')
-    stop_type = models.CharField(max_length=10, choices=STOP_TYPE_CHOICES, default='pickup')
+    stop_type = models.CharField(max_length=20, choices=TripStopTypeChoices.choices)
     driver_profile = models.ForeignKey(
         'fleet.DriverProfile', null=True, blank=True, related_name='stops', on_delete=models.SET_NULL
     )
@@ -238,6 +192,12 @@ class TripStop(CommonInfo):
         'fleet.DriverProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='completed_stops'
     )
     notes = models.TextField(blank=True, null=True, verbose_name='Notes')
+    notifications = models.JSONField(
+        verbose_name='Notifications', blank=True, null=True, help_text='Notification settings for the stop'
+    )
+    sla = models.JSONField(
+        verbose_name='SLA', blank=True, null=True, help_text='Service Level Agreement settings for the stop'
+    )
 
     def __str__(self):
         return f"{self.get_stop_type_display()} - {self.location.name}"

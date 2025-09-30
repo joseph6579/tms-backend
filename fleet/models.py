@@ -1,9 +1,10 @@
 import uuid
 
-from attr.validators import max_len
-from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
+
 from commons.behaviour import CommonInfo
+from commons.constants import DriverStatusChoices
 
 VEHICLE_SOURCES = (
     ("in_house", "in_house"),
@@ -24,13 +25,6 @@ PAYMENT_MODEL_TYPES = (
     ("distance", "Distance Based"),
     ("time", "Time Based"),
     ("hybrid", "Hybrid"),
-)
-
-DRIVER_STATUSES = (
-    ("busy", "busy"),
-    ("available", "available"),
-    ("offline", "offline"),
-    ("inactive", "inactive"),
 )
 
 
@@ -115,7 +109,7 @@ class DriverProfile(CommonInfo):
     first_name = models.CharField(max_length=50, db_index=True)
     last_name = models.CharField(max_length=50, db_index=True)
     active = models.BooleanField(default=True)
-    status = models.CharField(choices=DRIVER_STATUSES, default="available", db_index=True)
+    status = models.CharField(choices=DriverStatusChoices.choices, default=DriverStatusChoices.AVAILABLE.value, db_index=True)
     national_id = models.CharField(max_length=50)
 
     # def __str__(self):

@@ -1,6 +1,6 @@
 import uuid
 
-from dispatch.constants import OrderStatusChoices
+from commons.constants import OrderStatusChoices
 from dispatch.models import Location
 from django.contrib.gis.geos import Point
 

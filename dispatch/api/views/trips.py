@@ -147,12 +147,6 @@ class TripViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(trip)
         return Response(serializer.data)
 
-      
-    @action(detail=False, methods=['get'], url_path='active-steps')
-    def active_steps(self, request, *args, **kwargs):
-        org = Organisation.objects.first()
-        steps = trip_svc.fetch_stops_configuration(org=org)
-        return Response(steps)
 
 
 class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
@@ -165,7 +159,7 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
         is_superuser = getattr(user, 'is_superuser', False)
         org_id = getattr(user, 'organisation_id', None)
 
-        related_fields = ['driver_profile', 'vehicle', 'start_location', 'end_location']
+        related_fields = ['driver_profile', 'vehicle',]
         fields = [
             'id',
             'created_at',
@@ -178,12 +172,8 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
             'actual_geometry',
             'notes',
             'distance',
-            'start_location__name',
-            'start_location__address',
-            'start_location__coordinates',
-            'end_location__name',
-            'end_location__address',
-            'end_location__coordinates',
+            'start_point',
+            'end_point',
             'driver_profile_id',
             'driver_profile__first_name',
             'driver_profile__last_name',
@@ -221,4 +211,12 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
             end_loc_data=data.get('end_location'),
         )
         return Response({'detail': 'Trip created successfully'}, status=status.HTTP_201_CREATED)
+
+
+    @action(detail=False, methods=['get'], url_path='active-steps')
+    def active_steps(self, request, *args, **kwargs):
+        org = Organisation.objects.first()
+        steps = trip_svc.fetch_stops_configuration(org=org)
+        return Response(steps)
+
 

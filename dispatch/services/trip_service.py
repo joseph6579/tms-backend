@@ -8,14 +8,15 @@ from django.utils import timezone
 from django.db import transaction
 
 
-from commons.constants import OrderStatusConfiguration, TripStopTypeChoices, OrderStatusChoices, DriverStatusChoices
+from commons.constants import OrderStatusConfiguration, TripStopTypeChoices, OrderStatusChoices, DriverStatusChoices, \
+    TripStatusChoices
 from dispatch.models import Trip, TripStop, Order, Location
 
-from dispatch.constants import TripStopTypesChoices, OrderStatusChoices
+from commons.constants import TripStopTypeChoices, OrderStatusChoices
 from dispatch.models import Order, Trip, TripStop, Location
 from dispatch.utils import get_or_create_location
 
-from fleet.models import Vehicle
+from fleet.models import Vehicle, DriverProfile
 from organisations.models import Organisation
 from users.models import Driver
 
@@ -69,7 +70,7 @@ class TripService:
 
 
     @transaction.atomic
-    def construct_bare_trip_step_data(self, org: Organisation, trip: Trip, orders: List[Order], driver: Driver = None):
+    def construct_bare_trip_step_data(self, org: Organisation, trip: Trip, orders: List[Order], driver_profile: DriverProfile = None):
         """
         Handles creation of trip stops for non-optimized trips. The method outlines the steps
         1. Fetch the organization's stop configuration using fetch_stops_configuration.
@@ -99,7 +100,7 @@ class TripService:
                         sequence=0,  # Sequence should be set appropriately
                         notifications=notifications,
                         sla=sla,
-                        driver=driver
+                        driver_profile=driver_profile
                     )
                 )
 
@@ -118,13 +119,16 @@ class TripService:
                         sequence=0,  # Sequence should be set appropriately
                         notifications=notifications,
                         sla=sla,
-                        driver=driver
+                        driver_profile=driver_profile
                     )
                 )
 
         # create start and end trip stops
         first_order = orders[0]
-        last_order = orders[-1]
+        last_order = orders[-1] if len(orders) > 1 else first_order
+        start_location = first_order.pickup
+        end_location = last_order.drop_off
+
         all_trip_stops.append(
             TripStop(
                 trip=trip,
@@ -134,7 +138,7 @@ class TripService:
                 sequence=0,  # Sequence should be set appropriately
                 notifications=None,
                 sla=None,
-                driver=driver
+                driver_profile=driver_profile
             )
         )
         all_trip_stops.append(
@@ -146,50 +150,48 @@ class TripService:
                 sequence=0,  # Sequence should be set appropriately
                 notifications=None,
                 sla=None,
-                driver=driver
+                driver_profile=driver_profile
             )
         )
         TripStop.objects.bulk_create(all_trip_stops)
 
     @staticmethod
-    def create_trip(org: Organisation, orders: List[Order], vehicle: Vehicle = None, driver: Driver = None) -> Trip:
-        """
-        Create a new trip with associated trip stops for the given orders.
-        :param org: Organisation instance
-        :param orders: List of Order instances to be included in the trip
-        :param vehicle: Optional Vehicle instance to be assigned to the trip
-        :param driver: Optional Driver instance to be assigned to the trip
-        :return: Created Trip instance
-        """
+    def create_trip(org: Organisation, orders: List[Order], driver_profile: DriverProfile = None) -> Trip:
         if not orders:
             raise ValueError("At least one order is required to create a trip.")
 
         # Use the first order's pickup as start and last order's dropoff as end
-        start_location = orders[0].pickup
-        end_location = orders[-1].drop_off
+        first_order = orders[0]
+        last_order = orders[-1] if len(orders) > 1 else first_order
+        start_location = first_order.pickup
+        end_location = last_order.drop_off
 
         # Create trip
+        vehicle = driver_profile.vehicle if driver_profile else None
+        status = TripStatusChoices.ASSIGNED.value if driver_profile else TripStatusChoices.PENDING.value
         trip = Trip.objects.create(
-            organization=org,
+            organisation=org,
             vehicle=vehicle,
-            driver=driver,
-            start_location=start_location,
-            end_location=end_location,
-            scheduled_start_time=timezone.now()
+            driver_profile=driver_profile,
+            start_point=start_location.coordinates,
+            end_point=end_location.coordinates,
+            scheduled_start_time=timezone.now(),
+            status=status
         )
         return trip
 
     @staticmethod
-    def update_trip_orders(orders: QuerySet[Order], trip: Trip, driver: Driver = None) -> None:
+    def update_trip_orders(orders: QuerySet[Order], trip: Trip, driver_profile: DriverProfile = None) -> None:
         """Update orders to associate them with the given trip and driver"""
-        status = OrderStatusChoices.ASSIGNED.value if driver else OrderStatusChoices.BROADCASTED.value
-        orders.update(trip=trip, driver=driver, status=status)
+        status = OrderStatusChoices.ASSIGNED.value if driver_profile else OrderStatusChoices.BROADCASTED.value
+        orders.update(trip=trip, driver_profile=driver_profile, status=status)
 
     @staticmethod
     def validate_order_statuses(orders: List[Order]) -> bool:
         """Validate that all orders are in allowed statuses"""
+        assignable_statuses = OrderStatusChoices.assignable_statuses()
         for order in orders:
-            if order.status not in OrderStatusChoices.assignable_statuses():
+            if order.status not in assignable_statuses:
                 return False
         return True
 
@@ -449,12 +451,12 @@ class TripBuilder:
             scheduled_start_time=timezone.now(),
         )
 
-        self._add_stop(location=start_location, stop_type=TripStopTypesChoices.START.value, sequence=1)
+        self._add_stop(location=start_location, stop_type=TripStopTypeChoices.START.value, sequence=1)
         self.end_stop = TripStop(
             trip=self.trip,
             driver_profile=self.driver_profile,
             location=end_location or start_location,
-            stop_type=TripStopTypesChoices.END.value,
+            stop_type=TripStopTypeChoices.END.value,
         )
 
     def _add_stop(self, **kwargs):
@@ -472,7 +474,7 @@ class TripBuilder:
                 driver_profile=self.driver_profile,
                 location=origin,
                 sequence=sequence,
-                stop_type=TripStopTypesChoices.AT_STORE.value,
+                stop_type=TripStopTypeChoices.AT_STORE.value,
                 order_id=order_id,
             )
             sequence += 1
@@ -481,7 +483,7 @@ class TripBuilder:
                 driver_profile=self.driver_profile,
                 location=origin,
                 sequence=sequence,
-                stop_type=TripStopTypesChoices.PICKUP.value,
+                stop_type=TripStopTypeChoices.PICKUP.value,
                 order_id=order_id,
             )
             sequence += 1
@@ -490,7 +492,7 @@ class TripBuilder:
                 driver_profile=self.driver_profile,
                 location=drop_off,
                 order_id=order_id,
-                stop_type=TripStopTypesChoices.AT_DROP_OFF.value,
+                stop_type=TripStopTypeChoices.AT_DROP_OFF.value,
                 sequence=sequence,
             )
             sequence += 1
@@ -499,7 +501,7 @@ class TripBuilder:
                 driver_profile=self.driver_profile,
                 location=drop_off,
                 order_id=order_id,
-                stop_type=TripStopTypesChoices.DROP_OFF.value,
+                stop_type=TripStopTypeChoices.DROP_OFF.value,
                 sequence=sequence,
             )
             sequence += 1

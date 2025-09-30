@@ -207,7 +207,7 @@ class Customer(CommonInfo):
     email = models.EmailField(verbose_name='Email Address', blank=True, null=True)
     phone_number = models.CharField(max_length=15, verbose_name='Phone Number', blank=True, null=True)
     location = models.ForeignKey(
-        Location, on_delete=models.PROTECT, verbose_name='Location', related_name='customers', null=True, blank=True
+        Location, on_delete=models.PROTECT, verbose_name='Location', related_name='customer', null=True, blank=True
     )
     organisation = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='customers')
     is_active = models.BooleanField(default=True, verbose_name='Is Active')

@@ -266,48 +266,28 @@ class DispatchOrdersSerializer(serializers.Serializer):
     :ivar order_ids: List of order IDs that are to be dispatched. This field is
         mandatory and cannot be empty.
     :type order_ids: List[UUID]
-    :ivar driver_id: ID of the driver to whom the orders will be assigned. This
+    :ivar driver_profile_id: ID of the driver to whom the orders will be assigned. This
         field is optional and can be null.
-    :type driver_id: UUID or None
+    :type driver_profile_id: UUID or None
     """
     order_ids = serializers.ListField(
         child=serializers.UUIDField(),
         allow_empty=False,
         help_text="List of order IDs to be dispatched"
     )
-    driver_id = serializers.UUIDField(
+    driver_profile_id = serializers.UUIDField(
         help_text="ID of the driver to whom the orders will be assigned",
         required=False,
         allow_null=True
     )
 
-    def validate_driver_id(self, value):
-        from users.models import Driver
+    def validate_driver_profile_id(self, value):
+        from fleet.models import DriverProfile
         if value is None:
             return value
         try:
-            Driver.objects.get(id=value).only('id')
-        except Driver.DoesNotExist:
+            DriverProfile.objects.only('id').get(id=value)
+        except ObjectDoesNotExist:
             raise serializers.ValidationError("Invalid driver")
         return value
-
-        fields = [
-            'id',
-            'created_at',
-            'updated_at',
-            'reference_number',
-            'status',
-            'priority',
-            'date_delivered',
-            'date_cancelled',
-            'date_failed',
-            'description',
-            'instructions',
-            'store',
-            'driver_profile',
-            'recipient',
-            'buyer',
-            'pickup',
-            'drop_off',
-        ]
 

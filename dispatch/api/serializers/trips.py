@@ -2,7 +2,7 @@ from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 
-from dispatch.constants import OrderStatusChoices
+from commons.constants import OrderStatusChoices
 from dispatch.models import Trip, TripStop, Order, Location
 from dispatch.api.serializers.orders_old import OrderSerializer
 from fleet.models import DriverProfile, Vehicle
@@ -37,20 +37,20 @@ class TripSerializer(serializers.ModelSerializer):
         return data
 
 
-class LocationMinimSerializer(serializers.ModelSerializer):
+class CoordinatesSerializer(serializers.Serializer):
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
 
     class Meta:
-        model = Location
-        fields = ['id', 'name', 'address', 'latitude', 'longitude']
+        # model = Location
+        fields = ['latitude', 'longitude']
         ref_name = 'trips'
 
     def get_latitude(self, obj):
-        return obj.coordinates.y
+        return obj.y
 
     def get_longitude(self, obj):
-        return obj.coordinates.x
+        return obj.x
 
 
 class DriverProfileMinimSerializer(serializers.ModelSerializer):
@@ -71,8 +71,8 @@ class VehicleMinimSerializer(serializers.ModelSerializer):
 
 
 class TripListSerializer(serializers.ModelSerializer):
-    start_location = LocationMinimSerializer()
-    end_location = LocationMinimSerializer()
+    start_point = CoordinatesSerializer()
+    end_point = CoordinatesSerializer()
     driver_profile = DriverProfileMinimSerializer()
     vehicle = VehicleMinimSerializer()
 
@@ -93,8 +93,8 @@ class TripListSerializer(serializers.ModelSerializer):
             'distance',
             'driver_profile',
             'vehicle',
-            'start_location',
-            'end_location',
+            'start_point',
+            'end_point',
         ]
 
 
