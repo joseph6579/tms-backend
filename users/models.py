@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from commons.constants import DriverStatusChoices
 from users.managers import CustomUserManager
 
 USER_ROLES = (
@@ -52,7 +53,7 @@ class CustomUser(AbstractUser):
 # TODO: Explore a better way to handle this - should drivers be users? Or a separate entity?
 class Driver(CustomUser):
     phone_number = models.CharField(max_length=15, null=True, blank=True)
-    status = models.CharField(max_length=10, default='active', choices=DRIVER_STATUSES)
+    status = models.CharField(max_length=10, default=DriverStatusChoices.AVAILABLE, choices=DriverStatusChoices.choices)
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}'

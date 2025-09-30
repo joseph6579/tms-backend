@@ -1,12 +1,26 @@
 from typing import List, Optional
 
+from django.db.models import QuerySet
 from django.utils import timezone
+from django.db import transaction
 
-from commons.constants import OrderStatusConfiguration, TripStopTypeChoices
+from commons.constants import OrderStatusConfiguration, TripStopTypeChoices, OrderStatusChoices, DriverStatusChoices
 from dispatch.models import Trip, TripStop, Order, Location
 from fleet.models import Vehicle
 from organisations.models import Organisation
 from users.models import Driver
+
+from pydantic import BaseModel, Field
+import uuid
+
+# class TripStepLocation(BaseModel):
+#     latitude: float
+#     longitude: float
+#
+# class TripStepPayload(BaseModel):
+#     order_id: uuid
+#     pickup: TripStepLocation
+#     dropoff: TripStepLocation
 
 
 class TripService:
@@ -42,8 +56,11 @@ class TripService:
                 result[stop_type].append({'stop': alias, 'notifications': notifications, 'sla': sla})
         return result
 
-    def construct_trip_step_data(self):
+
+    @transaction.atomic
+    def construct_bare_trip_step_data(self, org: Organisation, trip: Trip, orders: List[Order], driver: Driver = None):
         """
+        Handles creation of trip stops for non-optimized trips. The method outlines the steps
         1. Fetch the organization's stop configuration using fetch_stops_configuration.
         2. For each trip, iterate through its stops and match the stop type with the
            configuration to gather relevant notifications and SLA details.
@@ -51,7 +68,124 @@ class TripService:
            associated notifications, and SLA information.
         :return:
         """
-        pass
+        active_stops = self.fetch_stops_configuration(org=org)
+        pickup_stops = active_stops.get(TripStopTypeChoices.PICKUP.value, [])
+        dropoff_stops = active_stops.get(TripStopTypeChoices.DROPOFF.value, [])
+
+        all_trip_stops = []
+        # create pickup trip stops
+        for stop in pickup_stops:
+            stop_type = stop['stop']
+            notifications = stop['notifications']
+            sla = stop['sla']
+            for order in orders:
+                all_trip_stops.append(
+                    TripStop(
+                        trip=trip,
+                        order=order,
+                        coordinates=order.pickup.coordinates,
+                        stop_type=stop_type,
+                        sequence=0,  # Sequence should be set appropriately
+                        notifications=notifications,
+                        sla=sla,
+                        driver=driver
+                    )
+                )
+
+        # create dropoff trip stops
+        for stop in dropoff_stops:
+            stop_type = stop['stop']
+            notifications = stop['notifications']
+            sla = stop['sla']
+            for order in orders:
+                all_trip_stops.append(
+                    TripStop(
+                        trip=trip,
+                        order=order,
+                        coordinates=order.drop_off.coordinates,
+                        stop_type=stop_type,
+                        sequence=0,  # Sequence should be set appropriately
+                        notifications=notifications,
+                        sla=sla,
+                        driver=driver
+                    )
+                )
+
+        # create start and end trip stops
+        first_order = orders[0]
+        last_order = orders[-1]
+        all_trip_stops.append(
+            TripStop(
+                trip=trip,
+                order=None,
+                coordinates=first_order.pickup.coordinates,
+                stop_type='start',
+                sequence=0,  # Sequence should be set appropriately
+                notifications=None,
+                sla=None,
+                driver=driver
+            )
+        )
+        all_trip_stops.append(
+            TripStop(
+                trip=trip,
+                order=None,
+                coordinates=last_order.drop_off.coordinates,
+                stop_type='end',
+                sequence=0,  # Sequence should be set appropriately
+                notifications=None,
+                sla=None,
+                driver=driver
+            )
+        )
+        TripStop.objects.bulk_create(all_trip_stops)
+
+    @staticmethod
+    def create_trip(org: Organisation, orders: List[Order], vehicle: Vehicle = None, driver: Driver = None) -> Trip:
+        """
+        Create a new trip with associated trip stops for the given orders.
+        :param org: Organisation instance
+        :param orders: List of Order instances to be included in the trip
+        :param vehicle: Optional Vehicle instance to be assigned to the trip
+        :param driver: Optional Driver instance to be assigned to the trip
+        :return: Created Trip instance
+        """
+        if not orders:
+            raise ValueError("At least one order is required to create a trip.")
+
+        # Use the first order's pickup as start and last order's dropoff as end
+        start_location = orders[0].pickup
+        end_location = orders[-1].drop_off
+
+        # Create trip
+        trip = Trip.objects.create(
+            organization=org,
+            vehicle=vehicle,
+            driver=driver,
+            start_location=start_location,
+            end_location=end_location,
+            scheduled_start_time=timezone.now()
+        )
+        return trip
+
+    @staticmethod
+    def update_trip_orders(orders: QuerySet[Order], trip: Trip, driver: Driver = None) -> None:
+        """Update orders to associate them with the given trip and driver"""
+        status = OrderStatusChoices.ASSIGNED.value if driver else OrderStatusChoices.BROADCASTED.value
+        orders.update(trip=trip, driver=driver, status=status)
+
+    @staticmethod
+    def validate_order_statuses(orders: List[Order]) -> bool:
+        """Validate that all orders are in allowed statuses"""
+        for order in orders:
+            if order.status not in OrderStatusChoices.assignable_statuses():
+                return False
+        return True
+
+    @staticmethod
+    def validate_driver_availability(driver: Driver) -> bool:
+        """Validate that the driver is active and available"""
+        return driver.status == DriverStatusChoices.AVAILABLE
 
 
 

@@ -4,8 +4,11 @@ from rest_framework.response import Response
 from django.utils import timezone
 
 from dispatch.models import Order, OrderReview
-from dispatch.api.serializers.orders import OrderSerializer, OrderReviewSerializer
+from dispatch.api.serializers.orders import OrderSerializer, OrderReviewSerializer, DispatchOrdersSerializer
 from dispatch.services.broadcast_service import BroadcastService
+from dispatch.services.trip_service import trip_svc
+from users.models import Driver
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
@@ -105,3 +108,39 @@ class OrderViewSet(viewsets.ModelViewSet):
                 {'detail': 'Failed to accept batch'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+    @action(detail=False, methods=['post'], serializer_class=DispatchOrdersSerializer, url_path='dispatch')
+    def dispatch_orders(self, request, *args, **kwargs):
+        """Dispatch orders to drivers"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        order_ids = data.get('order_ids', [])
+        driver_id = data.get('driver_id', None)
+
+        orders = Order.objects.filter(id__in=order_ids)
+        driver = Driver.objects.get(id=driver_id) if driver_id else None
+
+        if not trip_svc.validate_order_statuses(orders=orders):
+            return Response(
+                {'detail': 'One or more orders are not in a dispatchable state'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if driver:
+            if not trip_svc.validate_driver_availability(driver=driver):
+                return Response(
+                    {'detail': 'Driver is not available for dispatch'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        trip = trip_svc.create_trip_from_orders(orders=orders, driver=driver)
+        trip_svc.construct_bare_trip_step_data(trip=trip, orders=orders, driver=driver)
+        trip_svc.update_trip_orders(trip=trip, orders=orders)
+
+        return Response(
+            {'detail': f'Dispatched {len(orders)} orders'},
+            status=status.HTTP_200_OK
+        )

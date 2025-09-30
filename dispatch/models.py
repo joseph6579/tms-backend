@@ -65,9 +65,9 @@ class Trip(CommonInfo):
     organization = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='trips')
     driver = models.ForeignKey('users.Driver', on_delete=models.SET_NULL, verbose_name='Driver', null=True, blank=True)
     vehicle = models.ForeignKey('fleet.Vehicle', on_delete=models.SET_NULL, verbose_name='Vehicle', null=True, blank=True)
-    status = models.CharField(max_length=20, default='scheduled', verbose_name='Trip Status')
-    start_location = models.ForeignKey(Location, on_delete=models.PROTECT, related_name='trip_starts', verbose_name='Start Location')
-    end_location = models.ForeignKey(Location, on_delete=models.PROTECT, related_name='trip_ends', verbose_name='End Location')
+    status = models.CharField(max_length=20, default='scheduled', verbose_name='Trip Status', null=True, blank=True)
+    start_point = geomodels.PointField(verbose_name='Start Point Coordinates', null=True, blank=True)
+    end_point = geomodels.PointField(verbose_name='End Point Coordinates', null=True, blank=True)
     scheduled_start_time = models.DateTimeField(verbose_name='Scheduled Start Time')
     actual_start_time = models.DateTimeField(null=True, blank=True, verbose_name='Actual Start Time')
     completed_time = models.DateTimeField(null=True, blank=True, verbose_name='Completed Time')
@@ -77,16 +77,12 @@ class Trip(CommonInfo):
     notes = models.TextField(blank=True, null=True, verbose_name='Notes')
 
     def __str__(self):
-        return f"Trip {self.id} - {self.driver}"
+        return f"Trip {self.id}"
 
     class Meta:
         verbose_name = 'Trip'
         verbose_name_plural = 'Trips'
         ordering = ['-scheduled_start_time']
-        indexes = [
-            models.Index(fields=['status']),
-            models.Index(fields=['scheduled_start_time']),
-        ]
 
 
 class Order(CommonInfo):
@@ -197,8 +193,8 @@ class TripStop(CommonInfo):
     ]
 
     order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL, related_name='stops')
+    coordinates = geomodels.PointField(verbose_name='coordinates', null=True, blank=True)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stops')
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='stops')
     stop_type = models.CharField(max_length=10, choices=STOP_TYPE_CHOICES, default='pickup')
     sequence = models.PositiveIntegerField()
     eta = models.DateTimeField(null=True, blank=True, verbose_name='Estimated Time of Arrival')

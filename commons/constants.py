@@ -3,6 +3,11 @@ from typing import Optional
 from django.db import models
 from pydantic import BaseModel, Field, model_validator
 
+class DriverStatusChoices(models.TextChoices):
+    OFFLINE = 'offline', 'Offline'
+    BUSY = 'busy', 'Busy'
+    AVAILABLE = 'available', 'available'
+
 
 class OrderStatusChoices(models.TextChoices):
     SCHEDULED = 'scheduled', 'Scheduled'
@@ -15,6 +20,20 @@ class OrderStatusChoices(models.TextChoices):
     COMPLETED = 'delivered', 'delivered'
     CANCELLED = 'cancelled', 'Cancelled'
     FAILED = 'failed', 'Failed'
+
+    @staticmethod
+    def final_statues():
+        return[
+            OrderStatusChoices.COMPLETED.value,
+            OrderStatusChoices.CANCELLED.value,
+            OrderStatusChoices.FAILED.value,
+            ]
+
+    @staticmethod
+    def assignable_statuses():
+        return [
+            OrderStatusChoices.PENDING.value,
+        ]
 
 
 class TripStopTypeChoices(models.TextChoices):

@@ -39,3 +39,42 @@ class OrderSerializer(serializers.ModelSerializer):
         # Set organization from request user
         validated_data['organization'] = self.context['request'].user.organisation
         return super().create(validated_data)
+
+
+
+
+class DispatchOrdersSerializer(serializers.Serializer):
+    """
+    Serializer to handle dispatching of orders.
+
+    This serializer is designed for dispatching orders to a specified driver. It
+    validates the inputs, including the list of order IDs and the optional driver ID,
+    ensuring the data provided is accurate and valid.
+
+    :ivar order_ids: List of order IDs that are to be dispatched. This field is
+        mandatory and cannot be empty.
+    :type order_ids: List[UUID]
+    :ivar driver_id: ID of the driver to whom the orders will be assigned. This
+        field is optional and can be null.
+    :type driver_id: UUID or None
+    """
+    order_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        allow_empty=False,
+        help_text="List of order IDs to be dispatched"
+    )
+    driver_id = serializers.UUIDField(
+        help_text="ID of the driver to whom the orders will be assigned",
+        required=False,
+        allow_null=True
+    )
+
+    def validate_driver_id(self, value):
+        from users.models import Driver
+        if value is None:
+            return value
+        try:
+            Driver.objects.get(id=value).only('id')
+        except Driver.DoesNotExist:
+            raise serializers.ValidationError("Invalid driver")
+        return value
