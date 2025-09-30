@@ -36,8 +36,6 @@ DRIVER_STATUSES = (
 
 class DriverGroup(CommonInfo):
     """Model to group drivers with similar payment terms"""
-
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     organisation = models.ForeignKey(
@@ -79,8 +77,8 @@ class DriverGroup(CommonInfo):
         ordering = ["name"]
 
 
+
 class Vehicle(CommonInfo):
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     organisation = models.ForeignKey("organisations.Organisation", related_name="vehicles", on_delete=models.CASCADE)
     registration_number = models.CharField(max_length=20, unique=True)
     source = models.CharField(max_length=11, choices=VEHICLE_SOURCES, default="in_house")
@@ -139,10 +137,9 @@ class DriverProfile(CommonInfo):
         ]
 
 
+
 class PaymentModel(CommonInfo):
     """Model to define how drivers are paid"""
-
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     organisation = models.ForeignKey(
         "organisations.Organisation",
         on_delete=models.CASCADE,
@@ -212,9 +209,9 @@ class PaymentModel(CommonInfo):
         unique_together = ["organisation", "name"]
 
 
+
 class DriverPayment(CommonInfo):
     """Model to track driver payments"""
-
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     driver = models.ForeignKey("users.Driver", on_delete=models.CASCADE, related_name="payments")
     driver_group = models.ForeignKey(DriverGroup, on_delete=models.PROTECT, related_name="payments")
@@ -249,10 +246,9 @@ class DriverPayment(CommonInfo):
         ordering = ["-period_end"]
 
 
+
 class PaymentDeduction(CommonInfo):
     """Model to track deductions from driver payments"""
-
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     payment = models.ForeignKey(DriverPayment, on_delete=models.CASCADE, related_name="deduction_records")
     description = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -274,8 +270,8 @@ class PaymentDeduction(CommonInfo):
         verbose_name_plural = "Payment Deductions"
 
 
+
 class VehicleAssignmentLogs(CommonInfo):
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     vehicle = models.ForeignKey("fleet.Vehicle", on_delete=models.CASCADE)
     driver = models.ForeignKey("users.Driver", on_delete=models.CASCADE, related_name="vehicle_assignments")
     assigned_by = models.ForeignKey(

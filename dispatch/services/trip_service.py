@@ -1,16 +1,205 @@
 from typing import List, Optional
 
+from django.db.models import QuerySet
+
 from django.db import transaction
+
 from django.utils import timezone
+from django.db import transaction
+
+
+from commons.constants import OrderStatusConfiguration, TripStopTypeChoices, OrderStatusChoices, DriverStatusChoices
+from dispatch.models import Trip, TripStop, Order, Location
 
 from dispatch.constants import TripStopTypesChoices, OrderStatusChoices
 from dispatch.models import Order, Trip, TripStop, Location
 from dispatch.utils import get_or_create_location
+
 from fleet.models import Vehicle
+from organisations.models import Organisation
 from users.models import Driver
 
 
+from pydantic import BaseModel, Field
+import uuid
+
+# class TripStepLocation(BaseModel):
+#     latitude: float
+#     longitude: float
+#
+# class TripStepPayload(BaseModel):
+#     order_id: uuid
+#     pickup: TripStepLocation
+#     dropoff: TripStepLocation
+
+
+
 class TripService:
+
+    @staticmethod
+    def fetch_stops_configuration(org: Organisation) -> dict:
+        """
+        Fetches the stops configuration for the given organization. The method processes the
+        organization's order status configuration, identifying active statuses that are designated
+        as trip stops. It extracts notifications, service level agreements (SLA), and other
+        relevant details for each active stop and organizes the data by stop type (e.g. pickup,
+        dropoff).
+
+        :param org: Organisation instance containing configuration details.
+        :type org: Organisation
+        :return: A dictionary with trip stop types as keys (e.g., pickup, dropoff) and lists
+                 of active stop details as values.
+        :rtype: dict
+        """
+        status_conf_json = org.configuration.order_status_configuration
+        status_conf_model = OrderStatusConfiguration(**status_conf_json)
+
+        result = {}
+        result[TripStopTypeChoices.PICKUP.value] = []
+        result[TripStopTypeChoices.DROPOFF.value] = []
+        for field_name, field in status_conf_model.model_fields.items():
+            alias = field.alias
+            status_obj = getattr(status_conf_model, field_name)
+            if status_obj.is_active and status_obj.is_trip_stop:
+                notifications = status_obj.notifications.model_dump() if status_obj.notifications else None
+                sla = status_obj.sla.model_dump() if status_obj.sla else None
+                stop_type = status_obj.stop_type
+                result[stop_type].append({'stop': alias, 'notifications': notifications, 'sla': sla})
+        return result
+
+
+    @transaction.atomic
+    def construct_bare_trip_step_data(self, org: Organisation, trip: Trip, orders: List[Order], driver: Driver = None):
+        """
+        Handles creation of trip stops for non-optimized trips. The method outlines the steps
+        1. Fetch the organization's stop configuration using fetch_stops_configuration.
+        2. For each trip, iterate through its stops and match the stop type with the
+           configuration to gather relevant notifications and SLA details.
+        3. Compile a structured representation of each trip's stops, including the stop type,
+           associated notifications, and SLA information.
+        :return:
+        """
+        active_stops = self.fetch_stops_configuration(org=org)
+        pickup_stops = active_stops.get(TripStopTypeChoices.PICKUP.value, [])
+        dropoff_stops = active_stops.get(TripStopTypeChoices.DROPOFF.value, [])
+
+        all_trip_stops = []
+        # create pickup trip stops
+        for stop in pickup_stops:
+            stop_type = stop['stop']
+            notifications = stop['notifications']
+            sla = stop['sla']
+            for order in orders:
+                all_trip_stops.append(
+                    TripStop(
+                        trip=trip,
+                        order=order,
+                        coordinates=order.pickup.coordinates,
+                        stop_type=stop_type,
+                        sequence=0,  # Sequence should be set appropriately
+                        notifications=notifications,
+                        sla=sla,
+                        driver=driver
+                    )
+                )
+
+        # create dropoff trip stops
+        for stop in dropoff_stops:
+            stop_type = stop['stop']
+            notifications = stop['notifications']
+            sla = stop['sla']
+            for order in orders:
+                all_trip_stops.append(
+                    TripStop(
+                        trip=trip,
+                        order=order,
+                        coordinates=order.drop_off.coordinates,
+                        stop_type=stop_type,
+                        sequence=0,  # Sequence should be set appropriately
+                        notifications=notifications,
+                        sla=sla,
+                        driver=driver
+                    )
+                )
+
+        # create start and end trip stops
+        first_order = orders[0]
+        last_order = orders[-1]
+        all_trip_stops.append(
+            TripStop(
+                trip=trip,
+                order=None,
+                coordinates=first_order.pickup.coordinates,
+                stop_type='start',
+                sequence=0,  # Sequence should be set appropriately
+                notifications=None,
+                sla=None,
+                driver=driver
+            )
+        )
+        all_trip_stops.append(
+            TripStop(
+                trip=trip,
+                order=None,
+                coordinates=last_order.drop_off.coordinates,
+                stop_type='end',
+                sequence=0,  # Sequence should be set appropriately
+                notifications=None,
+                sla=None,
+                driver=driver
+            )
+        )
+        TripStop.objects.bulk_create(all_trip_stops)
+
+    @staticmethod
+    def create_trip(org: Organisation, orders: List[Order], vehicle: Vehicle = None, driver: Driver = None) -> Trip:
+        """
+        Create a new trip with associated trip stops for the given orders.
+        :param org: Organisation instance
+        :param orders: List of Order instances to be included in the trip
+        :param vehicle: Optional Vehicle instance to be assigned to the trip
+        :param driver: Optional Driver instance to be assigned to the trip
+        :return: Created Trip instance
+        """
+        if not orders:
+            raise ValueError("At least one order is required to create a trip.")
+
+        # Use the first order's pickup as start and last order's dropoff as end
+        start_location = orders[0].pickup
+        end_location = orders[-1].drop_off
+
+        # Create trip
+        trip = Trip.objects.create(
+            organization=org,
+            vehicle=vehicle,
+            driver=driver,
+            start_location=start_location,
+            end_location=end_location,
+            scheduled_start_time=timezone.now()
+        )
+        return trip
+
+    @staticmethod
+    def update_trip_orders(orders: QuerySet[Order], trip: Trip, driver: Driver = None) -> None:
+        """Update orders to associate them with the given trip and driver"""
+        status = OrderStatusChoices.ASSIGNED.value if driver else OrderStatusChoices.BROADCASTED.value
+        orders.update(trip=trip, driver=driver, status=status)
+
+    @staticmethod
+    def validate_order_statuses(orders: List[Order]) -> bool:
+        """Validate that all orders are in allowed statuses"""
+        for order in orders:
+            if order.status not in OrderStatusChoices.assignable_statuses():
+                return False
+        return True
+
+    @staticmethod
+    def validate_driver_availability(driver: Driver) -> bool:
+        """Validate that the driver is active and available"""
+        return driver.status == DriverStatusChoices.AVAILABLE
+
+
+
     @staticmethod
     def format_orders_for_optimization(orders: List[Order], vehicles: List[Vehicle]) -> dict:
         """Format orders and vehicles for the optimization engine"""
@@ -53,7 +242,10 @@ class TripService:
 
     @staticmethod
     def create_trip_from_optimization(
-        optimization_result: dict, orders: List[Order], driver: Optional[Driver] = None
+        optimization_result: dict,
+        orders: List[Order],
+        organization: Organisation,
+        driver: Optional[Driver] = None
     ) -> Optional[Trip]:
         """Create a trip from optimization engine result"""
         if not optimization_result:
@@ -82,6 +274,7 @@ class TripService:
 
             # Create trip
             trip = Trip.objects.create(
+                organization=organization,
                 vehicle_id=vehicle_id,
                 driver=driver,
                 start_location=start_location,
@@ -198,6 +391,8 @@ class TripService:
         order.driver = None
         order.save()
 
+
+trip_svc = TripService()
 
 class TripBuilder:
     """
@@ -316,3 +511,4 @@ class TripBuilder:
     def _update_orders(self):
         status = OrderStatusChoices.ASSIGNED.value if self.driver_profile else OrderStatusChoices.BROADCASTED.value
         self.orders_qs.update(status=status, trip_id=self.trip.id, driver_profile=self.driver_profile)
+

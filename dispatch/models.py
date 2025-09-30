@@ -39,19 +39,48 @@ class Location(CommonInfo):
         ]
 
 
+class Customer(CommonInfo):
+    """
+    Model to represent a customer in the dispatch system.
+    """
+    name = models.CharField(max_length=100, verbose_name='Customer Name')
+    email = models.EmailField(verbose_name='Email Address', blank=True, null=True)
+    phone_number = models.CharField(max_length=15, verbose_name='Phone Number', blank=True, null=True)
+    location = models.ForeignKey(Location, on_delete=models.PROTECT, verbose_name='Location', related_name='customers',
+                               null=True, blank=True)
+    organization = models.ForeignKey('organisations.Organisation', on_delete=models.CASCADE, related_name='customers')
+    is_active = models.BooleanField(default=True, verbose_name='Is Active')
+    notes = models.TextField(blank=True, null=True, verbose_name='Notes')
+
+    def __str__(self):
+        return f"{self.name} ({self.email})"
+
+    class Meta:
+        verbose_name = 'Customer'
+        verbose_name_plural = 'Customers'
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['email']),
+            models.Index(fields=['phone_number']),
+        ]
+
+
 class Trip(CommonInfo):
     """
     Model to represent a trip in the dispatch system.
     """
-
     STATUS_CHOICES = [
         ('scheduled', 'scheduled'),
         ('pending', 'pending'),
         ('on_going', 'on_going'),
         ('complete', 'complete'),
     ]
-
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
+    
+    status = models.CharField(max_length=20, default='scheduled', verbose_name='Trip Status', null=True, blank=True)
+    start_point = geomodels.PointField(verbose_name='Start Point Coordinates', null=True, blank=True)
+    end_point = geomodels.PointField(verbose_name='End Point Coordinates', null=True, blank=True)
+    scheduled_start_time = models.DateTimeField(verbose_name='Scheduled Start Time')
     organisation = models.ForeignKey(
         'organisations.Organisation', related_name='trips', on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -61,18 +90,6 @@ class Trip(CommonInfo):
     vehicle = models.ForeignKey(
         'fleet.Vehicle', on_delete=models.SET_NULL, verbose_name='Vehicle', null=True, blank=True
     )
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='Trip Status')
-    start_location = models.ForeignKey(
-        Location, on_delete=models.PROTECT, related_name='trip_starts', verbose_name='Start Location'
-    )
-    end_location = models.ForeignKey(
-        Location,
-        on_delete=models.PROTECT,
-        related_name='trip_ends',
-        verbose_name='End Location',
-        help_text='Can be used for round trips',
-    )
-    scheduled_start_time = models.DateTimeField(verbose_name='Scheduled Start Time', null=True, blank=True)
     actual_start_time = models.DateTimeField(null=True, blank=True, verbose_name='Actual Start Time')
     completed_time = models.DateTimeField(null=True, blank=True, verbose_name='Completed Time')
     distance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name='Distance (km)')
@@ -89,24 +106,13 @@ class Trip(CommonInfo):
         verbose_name = 'Trip'
         verbose_name_plural = 'Trips'
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['status']),
-            models.Index(fields=['driver_profile']),
-            models.Index(fields=['scheduled_start_time']),
-            models.Index(fields=['organisation']),
-            models.Index(fields=['organisation', 'status']),
-            models.Index(fields=['organisation', 'created_at']),
-            models.Index(fields=['organisation', 'completed_time']),
-            models.Index(fields=['organisation', 'scheduled_start_time']),
-        ]
+
 
 
 class Order(CommonInfo):
     """
     Model to represent an order in the dispatch system.
     """
-
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     reference_number = models.CharField(max_length=100, verbose_name='Order Reference Number', blank=True)
     status = models.CharField(
         max_length=20,
@@ -217,15 +223,13 @@ class TripStop(CommonInfo):
     """
     Model to represent a stop in a trip.
     """
-
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
-    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stops')
     order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL, related_name='stops')
+    coordinates = geomodels.PointField(verbose_name='coordinates', null=True, blank=True)
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stops')
+    stop_type = models.CharField(max_length=10, choices=STOP_TYPE_CHOICES, default='pickup')
     driver_profile = models.ForeignKey(
         'fleet.DriverProfile', null=True, blank=True, related_name='stops', on_delete=models.SET_NULL
     )
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='stops')
-    stop_type = models.CharField(max_length=20, choices=TripStopTypesChoices, default='pickup')
     sequence = models.PositiveIntegerField()
     estimated_duration = models.PositiveIntegerField(null=True, blank=True, help_text='Estimated Duration in Seconds')
     completed = models.BooleanField(default=False)
@@ -242,22 +246,13 @@ class TripStop(CommonInfo):
         verbose_name = 'Trip Stop'
         verbose_name_plural = 'Trip Stops'
         ordering = ['trip', 'sequence', 'stop_type']
-        indexes = [
-            models.Index(fields=['stop_type']),
-            models.Index(fields=['driver_profile']),
-            models.Index(fields=['order']),
-            models.Index(fields=['trip', 'sequence']),
-            models.Index(fields=['trip', 'order']),
-            models.Index(fields=['trip', 'driver_profile']),
-        ]
+
 
 
 class OrderReview(CommonInfo):
     """
     Model to store order reviews and ratings
     """
-
-    id = models.UUIDField(primary_key=True, editable=False, default=uuid4)
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='reviews')
     driver = models.ForeignKey('users.Driver', on_delete=models.CASCADE, related_name='order_reviews')
     rating = models.PositiveIntegerField(
@@ -276,7 +271,4 @@ class OrderReview(CommonInfo):
         verbose_name = 'Order Review'
         verbose_name_plural = 'Order Reviews'
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['rating']),
-            models.Index(fields=['driver_rating']),
-        ]
+

@@ -1,12 +1,20 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAuthenticated
 
 
-class IsMasterUser(BasePermission):
+class IsMasterUser(IsAuthenticated):
     def has_permission(self, request, view):
+        perm = super().has_permission(request, view)
+        if not perm:
+            return False
         return request.user.is_master_user
 
-class IsMasterUserorReadOnly(BasePermission):
+
+
+class IsMasterUserOrReadOnly(IsAuthenticated):
     def has_permission(self, request, view):
+        perm = super().has_permission(request, view)
+        if not perm:
+            return False
         return request.user.is_master_user or request.method in SAFE_METHODS
 
 

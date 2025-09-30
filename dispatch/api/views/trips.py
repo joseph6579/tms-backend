@@ -8,8 +8,14 @@ from rest_framework.response import Response
 from dispatch.api.filters.trips import TripsFilter
 from dispatch.api.serializers.trips import TripSerializer, TripListSerializer, BasicTripCreationSerializer
 from dispatch.models import Trip, Order, TripStop
+from dispatch.services import trip_service
+from dispatch.services.trip_service import TripService, trip_svc
+from fleet.models import Vehicle
+from dispatch.api.serializers.trips import TripSerializer
+from organisations.models import Organisation
 from dispatch.services.trip_service import TripService, TripBuilder
 from fleet.models import Vehicle
+
 
 
 class TripViewSet(viewsets.ModelViewSet):
@@ -141,6 +147,13 @@ class TripViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(trip)
         return Response(serializer.data)
 
+      
+    @action(detail=False, methods=['get'], url_path='active-steps')
+    def active_steps(self, request, *args, **kwargs):
+        org = Organisation.objects.first()
+        steps = trip_svc.fetch_stops_configuration(org=org)
+        return Response(steps)
+
 
 class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
     serializer_class = TripListSerializer
@@ -208,3 +221,4 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
             end_loc_data=data.get('end_location'),
         )
         return Response({'detail': 'Trip created successfully'}, status=status.HTTP_201_CREATED)
+
