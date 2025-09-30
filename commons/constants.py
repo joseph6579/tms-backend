@@ -1,7 +1,15 @@
 from typing import Optional
+from pydantic import BaseModel
 
 from django.db import models
 from pydantic import BaseModel, Field, model_validator
+
+class StatusConfig(BaseModel):
+    name: str
+    is_ative: bool = True
+
+
+
 
 class DriverStatusChoices(models.TextChoices):
     OFFLINE = 'offline', 'Offline'
@@ -167,4 +175,9 @@ class LanguageChoices(models.TextChoices):
 
 def default_order_status_config():
     return OrderStatusConfiguration().model_dump(by_alias=True)
+
+
+#     @classmethod
+#   def choices(cls):
+#       return [(value, value.replace('_', ' ').title()) for value in cls.__annotations__.values()]
 

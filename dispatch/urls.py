@@ -1,5 +1,8 @@
 from django.urls import path, include
 
 urlpatterns = [
-    path('', include('dispatch.api.urls')),
+    # path('api/v1/', include('dispatch.api.urls')),
+    path('', include('dispatch.api.urls.orders')),
+    path('', include('dispatch.api.urls.trips')),
+    path('', include('dispatch.api.urls.trip_stops')),
 ]

@@ -4,6 +4,8 @@ from pathlib import Path
 
 from celery.worker.strategy import default
 from decouple import config
+import os
+from ctypes.util import find_library
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -33,6 +35,8 @@ THIRD_PARTY_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'corsheaders',
+    'django_filters',
+    'django.contrib.gis',
 ]
 
 LOCAL_APPS = [
@@ -57,6 +61,11 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     'corsheaders.middleware.CorsMiddleware',
 ]
+
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
+    MIDDLEWARE.insert(1, "debug_toolbar.middleware.DebugToolbarMiddleware")
+
 
 ROOT_URLCONF = 'tms.urls'
 
@@ -87,7 +96,7 @@ DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.postgresql',
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME':  config('DB_NAME', cast=str),
+        'NAME': config('DB_NAME', cast=str),
         'USER': config('DB_USER', cast=str),
         'PASSWORD': config('DB_PASSWORD', cast=str),
         'HOST': config('DB_HOST', cast=str),
@@ -144,14 +153,17 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=str, default='http://localhost').split(',')
 
 CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', cast=str, default='http://localhost').split(',')
-CORS_ALLOWED_REGEXES =[
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+CORS_ALLOWED_REGEXES = [
     r'^http://localhost:',
 ]
+INTERNAL_IPS = [
+    '127.0.0.1',
+] + CORS_ALLOWED_ORIGINS  # debug toolbar
 
 # Email Settings
 EMAIL_HOST = config('EMAIL_HOST', cast=str, default='smtp.gmail.com')
@@ -183,6 +195,7 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': (
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
+        'django_filters.rest_framework.DjangoFilterBackend',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -269,7 +282,7 @@ SOCIALACCOUNT_PROVIDERS = {
             'client_id': GOOGLE_CLIENT_ID,
             'secret': GOOGLE_CLIENT_SECRET,
             'key': GOOGLE_API_KEY,
-        }
+        },
     }
 }
 
@@ -280,3 +293,4 @@ PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY', cast=str, default='')
 
 GDAL_LIBRARY_PATH = config('GDAL_LIBRARY_PATH', cast=str)
 GEOS_LIBRARY_PATH = config('GEOS_LIBRARY_PATH', cast=str)
+
