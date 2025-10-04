@@ -3,14 +3,10 @@ import json
 from redis import Redis
 from django.conf import settings
 
+
 class LocationService:
     def __init__(self):
-        self.redis = Redis(
-            host=settings.REDISHOST,
-            port=settings.REDISPORT,
-            db=0,
-            decode_responses=True
-        )
+        self.redis = Redis(host=settings.REDISHOST, port=settings.REDISPORT, db=0, decode_responses=True)
         self.LOCATION_KEY_PREFIX = "driver_location:"
         self.LOCATION_TTL = 300  # 5 minutes
 
@@ -20,20 +16,13 @@ class LocationService:
         Returns True if successful, False otherwise
         """
         import time
+
         try:
             key = f"{self.LOCATION_KEY_PREFIX}{driver_id}"
-            location_data = {
-                "latitude": latitude,
-                "longitude": longitude,
-                "timestamp": time.time()
-            }
-            
+            location_data = {"latitude": latitude, "longitude": longitude, "timestamp": time.time()}
+
             # Store location data with TTL
-            return self.redis.setex(
-                key,
-                self.LOCATION_TTL,
-                json.dumps(location_data)
-            )
+            return self.redis.setex(key, self.LOCATION_TTL, json.dumps(location_data))
         except Exception as e:
             print(f"Error updating location: {e}")
             return False
@@ -46,7 +35,7 @@ class LocationService:
         try:
             key = f"{self.LOCATION_KEY_PREFIX}{driver_id}"
             location_data = self.redis.get(key)
-            
+
             if location_data:
                 return json.loads(location_data)
             return None
@@ -68,20 +57,11 @@ class LocationService:
                 location_data = self.redis.get(key)
                 if location_data:
                     location = json.loads(location_data)
-                    distance = self.calculate_distance(
-                        latitude,
-                        longitude,
-                        location["latitude"],
-                        location["longitude"]
-                    )
-                    
+                    distance = self.calculate_distance(latitude, longitude, location["latitude"], location["longitude"])
+
                     if distance <= radius_km:
                         driver_id = key.replace(self.LOCATION_KEY_PREFIX, "")
-                        nearby_drivers.append({
-                            "driver_id": driver_id,
-                            "location": location,
-                            "distance": distance
-                        })
+                        nearby_drivers.append({"driver_id": driver_id, "location": location, "distance": distance})
 
             return sorted(nearby_drivers, key=lambda x: x["distance"])
         except Exception as e:
@@ -94,17 +74,17 @@ class LocationService:
         Returns distance in kilometers
         """
         from math import radians, sin, cos, sqrt, atan2
-        
+
         R = 6371  # Earth's radius in kilometers
 
         lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-        
+
         dlat = lat2 - lat1
         dlon = lon2 - lon1
-        
-        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-        c = 2 * atan2(sqrt(a), sqrt(1-a))
-        
+
+        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
         return R * c
 
     def clear_driver_location(self, driver_id: str) -> bool:

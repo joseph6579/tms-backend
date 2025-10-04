@@ -1,6 +1,7 @@
 from organisations.models import OrganisationConfiguration
 from commons.constants import OrderStatusConfiguration
 
+
 class OrganisationConfigService:
     @staticmethod
     def update_status_config(config: OrganisationConfiguration, config_data: dict) -> OrganisationConfiguration:

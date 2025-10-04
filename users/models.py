@@ -23,9 +23,7 @@ class CustomUser(AbstractUser):
     first_name = models.CharField(_("first name"), max_length=150)
     last_name = models.CharField(_("last name"), max_length=150)
     email = models.EmailField(_("email address"), unique=True)
-    organisation = models.ForeignKey(
-        "organisations.Organisation", on_delete=models.CASCADE, null=True, blank=True
-    )
+    organisation = models.ForeignKey("organisations.Organisation", on_delete=models.CASCADE, null=True, blank=True)
     role = models.CharField(choices=USER_ROLES, max_length=10, default="staff")
     is_master_user = models.BooleanField(default=False)
     custom_role = models.ForeignKey(
@@ -52,7 +50,6 @@ class CustomUser(AbstractUser):
                 codename=permission_codename, organisation=self.organisation
             ).exists()
         return False
-
 
 
 # TODO: Explore a better way to handle this - should drivers be users? Or a separate entity?

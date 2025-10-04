@@ -10,8 +10,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
@@ -42,22 +41,103 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('reference_number', models.CharField(blank=True, max_length=100, verbose_name='Order Reference Number')),
-                ('status', models.CharField(choices=[('scheduled', 'Scheduled'), ('pending', 'Pending'), ('broadcasted', 'Broadcasted'), ('assigned', 'Assigned'), ('at_store', 'At Store'), ('in_transit', 'In Transit'), ('at_drop_off', 'At Drop Off'), ('delivered', 'Delivered'), ('cancelled', 'Cancelled'), ('failed', 'Failed')], default='pending', max_length=20, verbose_name='Order Status')),
-                ('priority', models.PositiveIntegerField(default=1, help_text='1 is highest priority, 5 is lowest priority', validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(5)], verbose_name='Priority')),
-                ('weight', models.DecimalField(blank=True, decimal_places=4, help_text='Weight of the package in kilograms', max_digits=10, null=True, verbose_name='Package Weight (kg)')),
-                ('dimensions', models.JSONField(blank=True, help_text='Dimensions of the package in the format {"length": 0, "width": 0, "height": 0, "unit": "cm"}', null=True, verbose_name='Package Dimensions (LxWxH)')),
-                ('description', models.TextField(blank=True, help_text='Description of the order or package', null=True, verbose_name='Order Description')),
-                ('instructions', models.TextField(blank=True, help_text='Any special instructions for the order', null=True, verbose_name='Special Instructions')),
+                (
+                    'reference_number',
+                    models.CharField(blank=True, max_length=100, verbose_name='Order Reference Number'),
+                ),
+                (
+                    'status',
+                    models.CharField(
+                        choices=[
+                            ('scheduled', 'Scheduled'),
+                            ('pending', 'Pending'),
+                            ('broadcasted', 'Broadcasted'),
+                            ('assigned', 'Assigned'),
+                            ('at_store', 'At Store'),
+                            ('in_transit', 'In Transit'),
+                            ('at_drop_off', 'At Drop Off'),
+                            ('delivered', 'Delivered'),
+                            ('cancelled', 'Cancelled'),
+                            ('failed', 'Failed'),
+                        ],
+                        default='pending',
+                        max_length=20,
+                        verbose_name='Order Status',
+                    ),
+                ),
+                (
+                    'priority',
+                    models.PositiveIntegerField(
+                        default=1,
+                        help_text='1 is highest priority, 5 is lowest priority',
+                        validators=[
+                            django.core.validators.MinValueValidator(1),
+                            django.core.validators.MaxValueValidator(5),
+                        ],
+                        verbose_name='Priority',
+                    ),
+                ),
+                (
+                    'weight',
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=4,
+                        help_text='Weight of the package in kilograms',
+                        max_digits=10,
+                        null=True,
+                        verbose_name='Package Weight (kg)',
+                    ),
+                ),
+                (
+                    'dimensions',
+                    models.JSONField(
+                        blank=True,
+                        help_text='Dimensions of the package in the format {"length": 0, "width": 0, "height": 0, "unit": "cm"}',
+                        null=True,
+                        verbose_name='Package Dimensions (LxWxH)',
+                    ),
+                ),
+                (
+                    'description',
+                    models.TextField(
+                        blank=True,
+                        help_text='Description of the order or package',
+                        null=True,
+                        verbose_name='Order Description',
+                    ),
+                ),
+                (
+                    'instructions',
+                    models.TextField(
+                        blank=True,
+                        help_text='Any special instructions for the order',
+                        null=True,
+                        verbose_name='Special Instructions',
+                    ),
+                ),
                 ('scheduled_date', models.DateTimeField(blank=True, null=True, verbose_name='Scheduled Date')),
-                ('pickup_window_start', models.DateTimeField(blank=True, null=True, verbose_name='Pickup Window Start')),
+                (
+                    'pickup_window_start',
+                    models.DateTimeField(blank=True, null=True, verbose_name='Pickup Window Start'),
+                ),
                 ('pickup_window_end', models.DateTimeField(blank=True, null=True, verbose_name='Pickup Window End')),
-                ('delivery_window_start', models.DateTimeField(blank=True, null=True, verbose_name='Delivery Window Start')),
-                ('delivery_window_end', models.DateTimeField(blank=True, null=True, verbose_name='Delivery Window End')),
+                (
+                    'delivery_window_start',
+                    models.DateTimeField(blank=True, null=True, verbose_name='Delivery Window Start'),
+                ),
+                (
+                    'delivery_window_end',
+                    models.DateTimeField(blank=True, null=True, verbose_name='Delivery Window End'),
+                ),
                 ('date_delivered', models.DateTimeField(blank=True, null=True, verbose_name='Date Delivered')),
                 ('date_cancelled', models.DateTimeField(blank=True, null=True, verbose_name='Date Cancelled')),
                 ('date_failed', models.DateTimeField(blank=True, null=True, verbose_name='Date Failed')),
-                ('meta_data', models.JSONField(blank=True, help_text='Additional metadata for the order', null=True, verbose_name='Meta Data')),
+                (
+                    'meta_data',
+                    models.JSONField(
+                        blank=True, help_text='Additional metadata for the order', null=True, verbose_name='Meta Data'
+                    ),
+                ),
                 ('is_active', models.BooleanField(default=True, verbose_name='Is Active')),
             ],
             options={
@@ -72,8 +152,26 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('rating', models.PositiveIntegerField(help_text='Rating from 1 to 5', validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(5)])),
-                ('driver_rating', models.PositiveIntegerField(help_text='Driver rating from 1 to 5', validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(5)])),
+                (
+                    'rating',
+                    models.PositiveIntegerField(
+                        help_text='Rating from 1 to 5',
+                        validators=[
+                            django.core.validators.MinValueValidator(1),
+                            django.core.validators.MaxValueValidator(5),
+                        ],
+                    ),
+                ),
+                (
+                    'driver_rating',
+                    models.PositiveIntegerField(
+                        help_text='Driver rating from 1 to 5',
+                        validators=[
+                            django.core.validators.MinValueValidator(1),
+                            django.core.validators.MaxValueValidator(5),
+                        ],
+                    ),
+                ),
                 ('comments', models.TextField(blank=True, null=True)),
             ],
             options={
@@ -88,13 +186,33 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('status', models.CharField(blank=True, default='scheduled', max_length=20, null=True, verbose_name='Trip Status')),
-                ('start_point', django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326, verbose_name='Start Point Coordinates')),
-                ('end_point', django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326, verbose_name='End Point Coordinates')),
+                (
+                    'status',
+                    models.CharField(
+                        blank=True, default='scheduled', max_length=20, null=True, verbose_name='Trip Status'
+                    ),
+                ),
+                (
+                    'start_point',
+                    django.contrib.gis.db.models.fields.PointField(
+                        blank=True, null=True, srid=4326, verbose_name='Start Point Coordinates'
+                    ),
+                ),
+                (
+                    'end_point',
+                    django.contrib.gis.db.models.fields.PointField(
+                        blank=True, null=True, srid=4326, verbose_name='End Point Coordinates'
+                    ),
+                ),
                 ('scheduled_start_time', models.DateTimeField(verbose_name='Scheduled Start Time')),
                 ('actual_start_time', models.DateTimeField(blank=True, null=True, verbose_name='Actual Start Time')),
                 ('completed_time', models.DateTimeField(blank=True, null=True, verbose_name='Completed Time')),
-                ('distance', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Distance (km)')),
+                (
+                    'distance',
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Distance (km)'
+                    ),
+                ),
                 ('estimated_duration', models.DurationField(blank=True, null=True, verbose_name='Estimated Duration')),
                 ('actual_duration', models.DurationField(blank=True, null=True, verbose_name='Actual Duration')),
                 ('planned_geometry', models.TextField(blank=True, help_text='The planned geometry', null=True)),
@@ -113,10 +231,21 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('coordinates', django.contrib.gis.db.models.fields.PointField(blank=True, null=True, srid=4326, verbose_name='coordinates')),
-                ('stop_type', models.CharField(choices=[('pickup', 'Pickup'), ('delivery', 'Drop-off')], max_length=10)),
+                (
+                    'coordinates',
+                    django.contrib.gis.db.models.fields.PointField(
+                        blank=True, null=True, srid=4326, verbose_name='coordinates'
+                    ),
+                ),
+                (
+                    'stop_type',
+                    models.CharField(choices=[('pickup', 'Pickup'), ('delivery', 'Drop-off')], max_length=10),
+                ),
                 ('sequence', models.PositiveIntegerField()),
-                ('estimated_duration', models.PositiveIntegerField(blank=True, help_text='Estimated Duration in Seconds', null=True)),
+                (
+                    'estimated_duration',
+                    models.PositiveIntegerField(blank=True, help_text='Estimated Duration in Seconds', null=True),
+                ),
                 ('completed', models.BooleanField(default=False)),
                 ('completed_at', models.DateTimeField(blank=True, null=True, verbose_name='Completed At')),
                 ('notes', models.TextField(blank=True, null=True, verbose_name='Notes')),

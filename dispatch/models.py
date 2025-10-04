@@ -43,7 +43,15 @@ class Trip(CommonInfo):
     """
     Model to represent a trip in the dispatch system.
     """
-    status = models.CharField(max_length=20, choices=TripStatusChoices.choices, default=TripStatusChoices.PENDING, verbose_name='Trip Status', null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=TripStatusChoices.choices,
+        default=TripStatusChoices.PENDING,
+        verbose_name='Trip Status',
+        null=True,
+        blank=True,
+    )
     start_point = geomodels.PointField(verbose_name='Start Point Coordinates', null=True, blank=True)
     end_point = geomodels.PointField(verbose_name='End Point Coordinates', null=True, blank=True)
     scheduled_start_time = models.DateTimeField(verbose_name='Scheduled Start Time')
@@ -74,11 +82,11 @@ class Trip(CommonInfo):
         ordering = ['-created_at']
 
 
-
 class Order(CommonInfo):
     """
     Model to represent an order in the dispatch system.
     """
+
     reference_number = models.CharField(max_length=100, verbose_name='Order Reference Number', blank=True)
     status = models.CharField(
         max_length=20,
@@ -177,6 +185,7 @@ class TripStop(CommonInfo):
     """
     Model to represent a stop in a trip.
     """
+
     order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL, related_name='stops')
     coordinates = geomodels.PointField(verbose_name='coordinates', null=True, blank=True)
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='stops')
@@ -208,11 +217,11 @@ class TripStop(CommonInfo):
         ordering = ['trip', 'sequence', 'stop_type']
 
 
-
 class OrderReview(CommonInfo):
     """
     Model to store order reviews and ratings
     """
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='reviews')
     driver = models.ForeignKey('users.Driver', on_delete=models.CASCADE, related_name='order_reviews')
     rating = models.PositiveIntegerField(
@@ -231,4 +240,3 @@ class OrderReview(CommonInfo):
         verbose_name = 'Order Review'
         verbose_name_plural = 'Order Reviews'
         ordering = ['-created_at']
-

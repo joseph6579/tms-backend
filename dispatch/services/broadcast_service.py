@@ -6,6 +6,7 @@ from redis import Redis
 from dispatch.models import Order, Trip
 from users.models import Driver
 
+
 class BroadcastService:
     def __init__(self):
         self.redis = Redis(host='localhost', port=6379, db=0)
@@ -14,12 +15,7 @@ class BroadcastService:
 
     def lock_batch(self, batch_id: str) -> bool:
         """Lock a batch using Redis"""
-        return self.redis.set(
-            f"batch:{batch_id}:lock",
-            "locked",
-            ex=self.BATCH_LOCK_TIMEOUT,
-            nx=True
-        )
+        return self.redis.set(f"batch:{batch_id}:lock", "locked", ex=self.BATCH_LOCK_TIMEOUT, nx=True)
 
     def unlock_batch(self, batch_id: str) -> bool:
         """Unlock a batch"""
@@ -27,13 +23,8 @@ class BroadcastService:
 
     def get_eligible_drivers(self, order: Order, radius: float) -> List[Driver]:
         """Get eligible drivers within radius"""
-        return Driver.objects.filter(
-            organisation=order.organization,
-            status='available',
-            is_active=True
-        ).filter(
-            Q(rating__gte=4.0) |  # Minimum rating requirement
-            Q(rating__isnull=True)  # New drivers
+        return Driver.objects.filter(organisation=order.organization, status='available', is_active=True).filter(
+            Q(rating__gte=4.0) | Q(rating__isnull=True)  # Minimum rating requirement  # New drivers
         )
 
     def create_batch_from_orders(self, orders: List[Order]) -> dict:
@@ -56,12 +47,7 @@ class BroadcastService:
         batches = []
         for origin_key, origin_orders in orders_by_origin.items():
             # Apply constraints
-            current_batch = {
-                'orders': [],
-                'total_weight': 0,
-                'total_volume': 0,
-                'delivery_window': None
-            }
+            current_batch = {'orders': [], 'total_weight': 0, 'total_volume': 0, 'delivery_window': None}
 
             for order in origin_orders:
                 # Check constraints
@@ -76,7 +62,7 @@ class BroadcastService:
                             'orders': [order],
                             'total_weight': float(order.weight or 0),
                             'total_volume': 0,
-                            'delivery_window': order.delivery_window_end
+                            'delivery_window': order.delivery_window_end,
                         }
 
             if current_batch['orders']:
@@ -111,6 +97,7 @@ class BroadcastService:
 
         # Generate unique batch ID
         import uuid
+
         batch_id = str(uuid.uuid4())
 
         # Lock the batch
@@ -120,14 +107,14 @@ class BroadcastService:
         try:
             # Get first order for location reference
             reference_order = batch['orders'][0]
-            
+
             # Get eligible drivers
             radius = self.BROADCAST_RADIUS
             max_radius = 20  # km
-            
+
             while radius <= max_radius:
                 drivers = self.get_eligible_drivers(reference_order, radius)
-                
+
                 if drivers:
                     # Store batch information in Redis
                     self.redis.hmset(
@@ -136,22 +123,24 @@ class BroadcastService:
                             'status': 'broadcasting',
                             'created_at': timezone.now().isoformat(),
                             'order_ids': ','.join([str(order.id) for order in batch['orders']]),
-                            'driver_ids': ','.join([str(driver.id) for driver in drivers])
-                        }
+                            'driver_ids': ','.join([str(driver.id) for driver in drivers]),
+                        },
                     )
                     self.redis.expire(f"batch:{batch_id}", 300)  # 5 minutes TTL
 
                     # Send notifications to drivers (implement FCM later)
                     self.send_batch_notifications(batch, drivers)
-                    
+
                     # Update order metadata
                     for order in batch['orders']:
                         meta_data = order.meta_data or {}
-                        meta_data.update({
-                            'batch_id': batch_id,
-                            'broadcast_time': timezone.now().isoformat(),
-                            'broadcast_drivers': [str(d.id) for d in drivers]
-                        })
+                        meta_data.update(
+                            {
+                                'batch_id': batch_id,
+                                'broadcast_time': timezone.now().isoformat(),
+                                'broadcast_drivers': [str(d.id) for d in drivers],
+                            }
+                        )
                         order.meta_data = meta_data
                         order.save()
 
@@ -173,7 +162,7 @@ class BroadcastService:
     def handle_batch_acceptance(self, batch_id: str, driver_id: str) -> bool:
         """Handle driver's acceptance of a batch"""
         batch_key = f"batch:{batch_id}"
-        
+
         # Check if batch exists and is still valid
         if not self.redis.exists(batch_key):
             return False
@@ -194,34 +183,27 @@ class BroadcastService:
             # Check if organization has route optimization
             if driver.organisation.has_route_optimization:
                 from dispatch.services.trip_service import TripService
+
                 # Create optimized trip
                 optimization_data = TripService.format_orders_for_optimization(
-                    orders=list(orders),
-                    vehicles=[driver.vehicle] if driver.vehicle else []
+                    orders=list(orders), vehicles=[driver.vehicle] if driver.vehicle else []
                 )
                 # Call optimization service (implement actual API call)
                 optimization_result = []  # Result from optimization service
                 trip = TripService.create_trip_from_optimization(
-                    optimization_result=optimization_result,
-                    orders=list(orders),
-                    driver=driver
+                    optimization_result=optimization_result, orders=list(orders), driver=driver
                 )
             else:
                 # Create simple trip
                 from dispatch.services.trip_service import TripService
+
                 trip = TripService.create_simple_trip(
-                    orders=list(orders),
-                    driver=driver,
-                    vehicle=driver.vehicle if driver.vehicle else None
+                    orders=list(orders), driver=driver, vehicle=driver.vehicle if driver.vehicle else None
                 )
 
             if trip:
                 # Update order statuses
-                orders.update(
-                    status='assigned',
-                    driver=driver,
-                    trip=trip
-                )
+                orders.update(status='assigned', driver=driver, trip=trip)
                 return True
 
             return False

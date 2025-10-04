@@ -38,7 +38,10 @@ class CustomerMinimSerializer(serializers.ModelSerializer):
 class StoreMinimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Store
-        fields = ['id', 'name', ]
+        fields = [
+            'id',
+            'name',
+        ]
         ref_name = 'driver_trip_stores'
 
 
@@ -51,6 +54,7 @@ class OrderMinimSerializer(serializers.ModelSerializer):
 
     class Meta:
         from dispatch.services.driver_trips import driver_trips_svc
+
         model = Order
         fields = driver_trips_svc.order_fields() + ['pickup', 'drop_off', 'buyer', 'recipient', 'store']
         ref_name = 'driver_trip_orders'
@@ -61,10 +65,10 @@ class DriverTripStopSerializer(serializers.ModelSerializer):
 
     class Meta:
         from dispatch.services.driver_trips import driver_trips_svc
+
         model = TripStop
         fields = driver_trips_svc.trip_stop_fields()
         ref_name = 'driver_trip_stops'
-
 
 
 class DriverTripListSerializer(serializers.ModelSerializer):
@@ -75,7 +79,7 @@ class DriverTripListSerializer(serializers.ModelSerializer):
 
     class Meta:
         from dispatch.services.driver_trips import driver_trips_svc
+
         model = Trip
         fields = driver_trips_svc.trip_fields() + ['stops', 'orders']
         ref_name = 'driver_trips'
-

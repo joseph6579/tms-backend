@@ -145,7 +145,6 @@ class TripViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-
 class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
     serializer_class = TripListSerializer
     filterset_class = TripsFilter
@@ -156,7 +155,10 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
         is_superuser = getattr(user, 'is_superuser', False)
         org_id = getattr(user, 'organisation_id', None)
 
-        related_fields = ['driver_profile', 'vehicle',]
+        related_fields = [
+            'driver_profile',
+            'vehicle',
+        ]
         fields = [
             'id',
             'created_at',
@@ -209,11 +211,8 @@ class TripManagementViewset(viewsets.ReadOnlyModelViewSet):
         )
         return Response({'detail': 'Trip created successfully'}, status=status.HTTP_201_CREATED)
 
-
     @action(detail=False, methods=['get'], url_path='active-steps')
     def active_steps(self, request, *args, **kwargs):
         org = Organisation.objects.first()
         steps = trip_svc.fetch_stops_configuration(org=org)
         return Response(steps)
-
-

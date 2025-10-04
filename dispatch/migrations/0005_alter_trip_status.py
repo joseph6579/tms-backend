@@ -13,6 +13,19 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='trip',
             name='status',
-            field=models.CharField(blank=True, choices=[('scheduled', 'Scheduled'), ('completed', 'Completed'), ('on_going', 'On Going'), ('pending', 'Pending'), ('assigned', 'Assigned')], default='pending', max_length=20, null=True, verbose_name='Trip Status'),
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ('scheduled', 'Scheduled'),
+                    ('completed', 'Completed'),
+                    ('on_going', 'On Going'),
+                    ('pending', 'Pending'),
+                    ('assigned', 'Assigned'),
+                ],
+                default='pending',
+                max_length=20,
+                null=True,
+                verbose_name='Trip Status',
+            ),
         ),
     ]

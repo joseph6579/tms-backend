@@ -27,11 +27,26 @@ class Migration(migrations.Migration):
                 ('bonus_amount', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
                 ('deductions', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
                 ('total_amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('status', models.CharField(choices=[('pending', 'Pending'), ('processing', 'Processing'), ('paid', 'Paid'), ('failed', 'Failed')], default='pending', max_length=20)),
+                (
+                    'status',
+                    models.CharField(
+                        choices=[
+                            ('pending', 'Pending'),
+                            ('processing', 'Processing'),
+                            ('paid', 'Paid'),
+                            ('failed', 'Failed'),
+                        ],
+                        default='pending',
+                        max_length=20,
+                    ),
+                ),
                 ('payment_date', models.DateTimeField(blank=True, null=True)),
                 ('payment_reference', models.CharField(blank=True, max_length=100, null=True)),
                 ('notes', models.TextField(blank=True)),
-                ('payment_details', models.JSONField(blank=True, help_text='Detailed breakdown of payment calculation', null=True)),
+                (
+                    'payment_details',
+                    models.JSONField(blank=True, help_text='Detailed breakdown of payment calculation', null=True),
+                ),
             ],
             options={
                 'verbose_name': 'Driver Payment',
@@ -48,7 +63,19 @@ class Migration(migrations.Migration):
                 ('first_name', models.CharField(db_index=True, max_length=50)),
                 ('last_name', models.CharField(db_index=True, max_length=50)),
                 ('active', models.BooleanField(default=True)),
-                ('status', models.CharField(choices=[('busy', 'busy'), ('available', 'available'), ('offline', 'offline'), ('inactive', 'inactive')], db_index=True, default='available')),
+                (
+                    'status',
+                    models.CharField(
+                        choices=[
+                            ('busy', 'busy'),
+                            ('available', 'available'),
+                            ('offline', 'offline'),
+                            ('inactive', 'inactive'),
+                        ],
+                        db_index=True,
+                        default='available',
+                    ),
+                ),
                 ('national_id', models.CharField(max_length=50)),
             ],
             options={
@@ -78,7 +105,18 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('description', models.CharField(max_length=255)),
                 ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('deduction_type', models.CharField(choices=[('vehicle_maintenance', 'Vehicle Maintenance'), ('insurance', 'Insurance'), ('penalty', 'Penalty'), ('other', 'Other')], max_length=20)),
+                (
+                    'deduction_type',
+                    models.CharField(
+                        choices=[
+                            ('vehicle_maintenance', 'Vehicle Maintenance'),
+                            ('insurance', 'Insurance'),
+                            ('penalty', 'Penalty'),
+                            ('other', 'Other'),
+                        ],
+                        max_length=20,
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'Payment Deduction',
@@ -92,15 +130,70 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(max_length=100)),
-                ('model_type', models.CharField(choices=[('fixed', 'Fixed Rate'), ('commission', 'Commission Based'), ('distance', 'Distance Based'), ('time', 'Time Based'), ('hybrid', 'Hybrid')], max_length=20)),
+                (
+                    'model_type',
+                    models.CharField(
+                        choices=[
+                            ('fixed', 'Fixed Rate'),
+                            ('commission', 'Commission Based'),
+                            ('distance', 'Distance Based'),
+                            ('time', 'Time Based'),
+                            ('hybrid', 'Hybrid'),
+                        ],
+                        max_length=20,
+                    ),
+                ),
                 ('is_active', models.BooleanField(default=True)),
-                ('base_rate', models.DecimalField(blank=True, decimal_places=2, help_text='Base rate per delivery/trip', max_digits=10, null=True)),
-                ('commission_percentage', models.DecimalField(blank=True, decimal_places=2, help_text='Commission percentage of the delivery fee', max_digits=5, null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)])),
-                ('rate_per_km', models.DecimalField(blank=True, decimal_places=2, help_text='Rate per kilometer', max_digits=10, null=True)),
-                ('minimum_distance_fee', models.DecimalField(blank=True, decimal_places=2, help_text='Minimum fee for short distances', max_digits=10, null=True)),
-                ('hourly_rate', models.DecimalField(blank=True, decimal_places=2, help_text='Rate per hour', max_digits=10, null=True)),
-                ('minimum_hours', models.PositiveIntegerField(blank=True, help_text='Minimum billable hours', null=True)),
-                ('hybrid_config', models.JSONField(blank=True, help_text='Configuration for hybrid payment model', null=True)),
+                (
+                    'base_rate',
+                    models.DecimalField(
+                        blank=True, decimal_places=2, help_text='Base rate per delivery/trip', max_digits=10, null=True
+                    ),
+                ),
+                (
+                    'commission_percentage',
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        help_text='Commission percentage of the delivery fee',
+                        max_digits=5,
+                        null=True,
+                        validators=[
+                            django.core.validators.MinValueValidator(0),
+                            django.core.validators.MaxValueValidator(100),
+                        ],
+                    ),
+                ),
+                (
+                    'rate_per_km',
+                    models.DecimalField(
+                        blank=True, decimal_places=2, help_text='Rate per kilometer', max_digits=10, null=True
+                    ),
+                ),
+                (
+                    'minimum_distance_fee',
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        help_text='Minimum fee for short distances',
+                        max_digits=10,
+                        null=True,
+                    ),
+                ),
+                (
+                    'hourly_rate',
+                    models.DecimalField(
+                        blank=True, decimal_places=2, help_text='Rate per hour', max_digits=10, null=True
+                    ),
+                ),
+                (
+                    'minimum_hours',
+                    models.PositiveIntegerField(blank=True, help_text='Minimum billable hours', null=True),
+                ),
+                (
+                    'hybrid_config',
+                    models.JSONField(blank=True, help_text='Configuration for hybrid payment model', null=True),
+                ),
                 ('bonus_rules', models.JSONField(blank=True, help_text='Rules for performance bonuses', null=True)),
             ],
             options={
@@ -115,9 +208,34 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('registration_number', models.CharField(max_length=20, unique=True)),
-                ('source', models.CharField(choices=[('in_house', 'in_house'), ('third_party', 'third_party')], default='in_house', max_length=11)),
-                ('vehicle_type', models.CharField(choices=[('bicycle', 'bicycle'), ('ebike', 'ebike'), ('motorcycle', 'motorcycle'), ('pickup', 'pickup'), ('truck', 'truck')], default='motorcycle', max_length=10)),
-                ('capacity', models.DecimalField(blank=True, decimal_places=2, help_text='Capacity in kg', max_digits=10, null=True)),
+                (
+                    'source',
+                    models.CharField(
+                        choices=[('in_house', 'in_house'), ('third_party', 'third_party')],
+                        default='in_house',
+                        max_length=11,
+                    ),
+                ),
+                (
+                    'vehicle_type',
+                    models.CharField(
+                        choices=[
+                            ('bicycle', 'bicycle'),
+                            ('ebike', 'ebike'),
+                            ('motorcycle', 'motorcycle'),
+                            ('pickup', 'pickup'),
+                            ('truck', 'truck'),
+                        ],
+                        default='motorcycle',
+                        max_length=10,
+                    ),
+                ),
+                (
+                    'capacity',
+                    models.DecimalField(
+                        blank=True, decimal_places=2, help_text='Capacity in kg', max_digits=10, null=True
+                    ),
+                ),
                 ('specifications', models.JSONField(blank=True, help_text='Vehicle specifications', null=True)),
             ],
             options={
@@ -145,11 +263,44 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=100)),
                 ('description', models.TextField(blank=True)),
                 ('is_active', models.BooleanField(default=True)),
-                ('payment_overrides', models.JSONField(blank=True, help_text='Group-specific overrides for payment model settings', null=True)),
-                ('minimum_rating', models.DecimalField(blank=True, decimal_places=2, help_text='Minimum rating required for this group', max_digits=3, null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(5)])),
-                ('minimum_completed_trips', models.PositiveIntegerField(blank=True, help_text='Minimum number of completed trips required', null=True)),
-                ('vehicle_requirements', models.JSONField(blank=True, help_text='Vehicle requirements for this group', null=True)),
-                ('organisation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='driver_groups', to='organisations.organisation')),
+                (
+                    'payment_overrides',
+                    models.JSONField(
+                        blank=True, help_text='Group-specific overrides for payment model settings', null=True
+                    ),
+                ),
+                (
+                    'minimum_rating',
+                    models.DecimalField(
+                        blank=True,
+                        decimal_places=2,
+                        help_text='Minimum rating required for this group',
+                        max_digits=3,
+                        null=True,
+                        validators=[
+                            django.core.validators.MinValueValidator(0),
+                            django.core.validators.MaxValueValidator(5),
+                        ],
+                    ),
+                ),
+                (
+                    'minimum_completed_trips',
+                    models.PositiveIntegerField(
+                        blank=True, help_text='Minimum number of completed trips required', null=True
+                    ),
+                ),
+                (
+                    'vehicle_requirements',
+                    models.JSONField(blank=True, help_text='Vehicle requirements for this group', null=True),
+                ),
+                (
+                    'organisation',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='driver_groups',
+                        to='organisations.organisation',
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'Driver Group',

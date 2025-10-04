@@ -253,8 +253,6 @@ class OrderListSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-
-
 class DispatchOrdersSerializer(serializers.Serializer):
     """
     Serializer to handle dispatching of orders.
@@ -270,19 +268,17 @@ class DispatchOrdersSerializer(serializers.Serializer):
         field is optional and can be null.
     :type driver_profile_id: UUID or None
     """
+
     order_ids = serializers.ListField(
-        child=serializers.UUIDField(),
-        allow_empty=False,
-        help_text="List of order IDs to be dispatched"
+        child=serializers.UUIDField(), allow_empty=False, help_text="List of order IDs to be dispatched"
     )
     driver_profile_id = serializers.UUIDField(
-        help_text="ID of the driver to whom the orders will be assigned",
-        required=False,
-        allow_null=True
+        help_text="ID of the driver to whom the orders will be assigned", required=False, allow_null=True
     )
 
     def validate_driver_profile_id(self, value):
         from fleet.models import DriverProfile
+
         if value is None:
             return value
         try:
@@ -290,4 +286,3 @@ class DispatchOrdersSerializer(serializers.Serializer):
         except ObjectDoesNotExist:
             raise serializers.ValidationError("Invalid driver")
         return value
-

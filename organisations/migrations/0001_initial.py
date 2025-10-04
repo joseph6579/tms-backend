@@ -43,9 +43,26 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=100)),
                 ('description', models.TextField()),
                 ('price', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('duration_days', models.PositiveIntegerField(help_text='Duration in days', validators=[django.core.validators.MinValueValidator(1)])),
-                ('max_users', models.PositiveIntegerField(help_text='Maximum number of users allowed', validators=[django.core.validators.MinValueValidator(1)])),
-                ('max_drivers', models.PositiveIntegerField(help_text='Maximum number of drivers allowed', validators=[django.core.validators.MinValueValidator(1)])),
+                (
+                    'duration_days',
+                    models.PositiveIntegerField(
+                        help_text='Duration in days', validators=[django.core.validators.MinValueValidator(1)]
+                    ),
+                ),
+                (
+                    'max_users',
+                    models.PositiveIntegerField(
+                        help_text='Maximum number of users allowed',
+                        validators=[django.core.validators.MinValueValidator(1)],
+                    ),
+                ),
+                (
+                    'max_drivers',
+                    models.PositiveIntegerField(
+                        help_text='Maximum number of drivers allowed',
+                        validators=[django.core.validators.MinValueValidator(1)],
+                    ),
+                ),
                 ('features', models.JSONField(default=dict, help_text='Features included in this package')),
                 ('is_active', models.BooleanField(default=True)),
                 ('has_route_optimization', models.BooleanField(default=False)),
@@ -67,8 +84,25 @@ class Migration(migrations.Migration):
                 ('phone_number', models.CharField(blank=True, max_length=15, null=True, verbose_name='Phone Number')),
                 ('is_active', models.BooleanField(default=True, verbose_name='Is Active')),
                 ('notes', models.TextField(blank=True, null=True, verbose_name='Notes')),
-                ('location', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='customer', to='dispatch.location', verbose_name='Location')),
-                ('organisation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='customers', to='organisations.organisation')),
+                (
+                    'location',
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name='customer',
+                        to='dispatch.location',
+                        verbose_name='Location',
+                    ),
+                ),
+                (
+                    'organisation',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='customers',
+                        to='organisations.organisation',
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'Customer',
@@ -96,10 +130,51 @@ class Migration(migrations.Migration):
                 ('session_timeout_minutes', models.PositiveIntegerField(default=30)),
                 ('max_login_attempts', models.PositiveIntegerField(default=5)),
                 ('lockout_duration_minutes', models.PositiveIntegerField(default=15)),
-                ('order_status_configuration', models.JSONField(default=commons.constants.default_order_status_config, help_text='Configuration for different order statuses')),
-                ('timezone', models.CharField(choices=[('UTC', 'UTC'), ('EST', 'Eastern Standard Time'), ('CST', 'Central Standard Time'), ('MST', 'Mountain Standard Time'), ('PST', 'Pacific Standard Time'), ('IST', 'India Standard Time')], default='UTC', max_length=50)),
-                ('default_language', models.CharField(choices=[('en', 'English'), ('es', 'Spanish'), ('fr', 'French'), ('de', 'German'), ('zh', 'Chinese'), ('hi', 'Hindi')], default='en', max_length=10)),
-                ('organisation', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='configuration', to='organisations.organisation')),
+                (
+                    'order_status_configuration',
+                    models.JSONField(
+                        default=commons.constants.default_order_status_config,
+                        help_text='Configuration for different order statuses',
+                    ),
+                ),
+                (
+                    'timezone',
+                    models.CharField(
+                        choices=[
+                            ('UTC', 'UTC'),
+                            ('EST', 'Eastern Standard Time'),
+                            ('CST', 'Central Standard Time'),
+                            ('MST', 'Mountain Standard Time'),
+                            ('PST', 'Pacific Standard Time'),
+                            ('IST', 'India Standard Time'),
+                        ],
+                        default='UTC',
+                        max_length=50,
+                    ),
+                ),
+                (
+                    'default_language',
+                    models.CharField(
+                        choices=[
+                            ('en', 'English'),
+                            ('es', 'Spanish'),
+                            ('fr', 'French'),
+                            ('de', 'German'),
+                            ('zh', 'Chinese'),
+                            ('hi', 'Hindi'),
+                        ],
+                        default='en',
+                        max_length=10,
+                    ),
+                ),
+                (
+                    'organisation',
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='configuration',
+                        to='organisations.organisation',
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'Organisation Configuration',
@@ -112,14 +187,27 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('trip_stops', models.JSONField(default=organisations.preferences.schemas.trip_stops.default_steps_config, help_text='Trip Stops and Notifications')),
+                (
+                    'trip_stops',
+                    models.JSONField(
+                        default=organisations.preferences.schemas.trip_stops.default_steps_config,
+                        help_text='Trip Stops and Notifications',
+                    ),
+                ),
                 ('timezone', models.CharField(default='UTC', max_length=50)),
                 ('default_language', models.CharField(default='en', max_length=10)),
                 ('notification_settings', models.JSONField(default=dict, help_text='Notification preferences')),
                 ('branding', models.JSONField(default=dict, help_text='Branding settings like colors, logo URL, etc.')),
                 ('operational_hours', models.JSONField(default=dict, help_text='Operating hours for each day')),
                 ('delivery_settings', models.JSONField(default=dict, help_text='Delivery-related settings')),
-                ('organisation', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='preferences', to='organisations.organisation')),
+                (
+                    'organisation',
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='preferences',
+                        to='organisations.organisation',
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'Organisation Preferences',
@@ -135,10 +223,29 @@ class Migration(migrations.Migration):
                 ('start_date', models.DateTimeField()),
                 ('end_date', models.DateTimeField()),
                 ('is_active', models.BooleanField(default=True)),
-                ('payment_status', models.CharField(choices=[('pending', 'Pending'), ('paid', 'Paid'), ('failed', 'Failed'), ('cancelled', 'Cancelled')], default='pending', max_length=20)),
+                (
+                    'payment_status',
+                    models.CharField(
+                        choices=[
+                            ('pending', 'Pending'),
+                            ('paid', 'Paid'),
+                            ('failed', 'Failed'),
+                            ('cancelled', 'Cancelled'),
+                        ],
+                        default='pending',
+                        max_length=20,
+                    ),
+                ),
                 ('payment_reference', models.CharField(blank=True, max_length=100, null=True)),
                 ('auto_renew', models.BooleanField(default=True)),
-                ('organisation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to='organisations.organisation')),
+                (
+                    'organisation',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='subscriptions',
+                        to='organisations.organisation',
+                    ),
+                ),
                 ('package', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='organisations.package')),
             ],
             options={
@@ -156,7 +263,14 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=100)),
                 ('codename', models.CharField(max_length=100)),
                 ('description', models.TextField(blank=True)),
-                ('organisation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='permissions', to='organisations.organisation')),
+                (
+                    'organisation',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='permissions',
+                        to='organisations.organisation',
+                    ),
+                ),
             ],
             options={
                 'verbose_name': 'Permission',
@@ -174,7 +288,14 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=100)),
                 ('description', models.TextField(blank=True)),
                 ('is_active', models.BooleanField(default=True)),
-                ('organisation', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='roles', to='organisations.organisation')),
+                (
+                    'organisation',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='roles',
+                        to='organisations.organisation',
+                    ),
+                ),
                 ('permissions', models.ManyToManyField(related_name='roles', to='organisations.permission')),
             ],
             options={
@@ -194,11 +315,24 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(db_index=True, max_length=255)),
                 ('location', models.JSONField(default=dict)),
                 ('broadcast_radius', models.PositiveIntegerField(default=50, help_text='maximum broadcast radius')),
-                ('organisation', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='stores', to='organisations.organisation')),
+                (
+                    'organisation',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        related_name='stores',
+                        to='organisations.organisation',
+                    ),
+                ),
             ],
             options={
-                'indexes': [models.Index(fields=['name', 'organisation'], name='name_organisation_index'), models.Index(fields=['key', 'organisation'], name='key_organisation_index')],
-                'constraints': [models.UniqueConstraint(fields=('name', 'organisation'), name='unique_name_organisation'), models.UniqueConstraint(fields=('key', 'organisation'), name='unique_key_organisation')],
+                'indexes': [
+                    models.Index(fields=['name', 'organisation'], name='name_organisation_index'),
+                    models.Index(fields=['key', 'organisation'], name='key_organisation_index'),
+                ],
+                'constraints': [
+                    models.UniqueConstraint(fields=('name', 'organisation'), name='unique_name_organisation'),
+                    models.UniqueConstraint(fields=('key', 'organisation'), name='unique_key_organisation'),
+                ],
             },
         ),
     ]

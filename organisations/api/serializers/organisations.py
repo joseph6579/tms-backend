@@ -3,7 +3,6 @@ from rest_framework import serializers
 from pydantic import ValidationError
 
 
-
 class OrganisationRegistrationSerializer(serializers.Serializer):
     name = serializers.CharField()
     email = serializers.EmailField()
@@ -18,6 +17,7 @@ class OrganisationRegistrationSerializer(serializers.Serializer):
 
 class OrganisationRedactedSerializer(serializers.ModelSerializer):
     configuration_id = serializers.UUIDField(source='configuration.id', read_only=True)
+
     class Meta:
         from organisations.models import Organisation  # Avoid circular import
 
@@ -29,7 +29,6 @@ class OrganisationUpdateSerializer(serializers.Serializer):
     name = serializers.CharField()
     email = serializers.EmailField()
     phone_number = serializers.CharField()
-
 
 
 class OrganisationDetailSerializer(serializers.ModelSerializer):
@@ -45,6 +44,7 @@ class OrganisationOrderConfigurationSerializer(serializers.Serializer):
 
     def validate_config(self, value):
         from commons.constants import OrderStatusConfiguration
+
         try:
             OrderStatusConfiguration.model_validate(value)
         except ValidationError as e:

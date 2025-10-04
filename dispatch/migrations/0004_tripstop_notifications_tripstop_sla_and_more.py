@@ -13,21 +13,51 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='tripstop',
             name='notifications',
-            field=models.JSONField(blank=True, help_text='Notification settings for the stop', null=True, verbose_name='Notifications'),
+            field=models.JSONField(
+                blank=True, help_text='Notification settings for the stop', null=True, verbose_name='Notifications'
+            ),
         ),
         migrations.AddField(
             model_name='tripstop',
             name='sla',
-            field=models.JSONField(blank=True, help_text='Service Level Agreement settings for the stop', null=True, verbose_name='SLA'),
+            field=models.JSONField(
+                blank=True, help_text='Service Level Agreement settings for the stop', null=True, verbose_name='SLA'
+            ),
         ),
         migrations.AlterField(
             model_name='order',
             name='status',
-            field=models.CharField(choices=[('scheduled', 'Scheduled'), ('pending', 'Pending'), ('broadcasted', 'Broadcasted'), ('assigned', 'Assigned'), ('in_progress', 'In Progress'), ('arrived_at_pickup', 'Arrived at Pickup'), ('arrived_at_drop_off', 'Arrived at Drop-off'), ('delivered', 'delivered'), ('cancelled', 'Cancelled'), ('failed', 'Failed')], default='pending', max_length=20, verbose_name='Order Status'),
+            field=models.CharField(
+                choices=[
+                    ('scheduled', 'Scheduled'),
+                    ('pending', 'Pending'),
+                    ('broadcasted', 'Broadcasted'),
+                    ('assigned', 'Assigned'),
+                    ('in_progress', 'In Progress'),
+                    ('arrived_at_pickup', 'Arrived at Pickup'),
+                    ('arrived_at_drop_off', 'Arrived at Drop-off'),
+                    ('delivered', 'delivered'),
+                    ('cancelled', 'Cancelled'),
+                    ('failed', 'Failed'),
+                ],
+                default='pending',
+                max_length=20,
+                verbose_name='Order Status',
+            ),
         ),
         migrations.AlterField(
             model_name='tripstop',
             name='stop_type',
-            field=models.CharField(choices=[('pickup', 'Pickup'), ('delivery', 'Drop-off'), ('arrived_at_pickup', 'At Pickup'), ('arrived_at_drop_off', 'At Drop-off'), ('start', 'Start'), ('end', 'End')], max_length=20),
+            field=models.CharField(
+                choices=[
+                    ('pickup', 'Pickup'),
+                    ('delivery', 'Drop-off'),
+                    ('arrived_at_pickup', 'At Pickup'),
+                    ('arrived_at_drop_off', 'At Drop-off'),
+                    ('start', 'Start'),
+                    ('end', 'End'),
+                ],
+                max_length=20,
+            ),
         ),
     ]

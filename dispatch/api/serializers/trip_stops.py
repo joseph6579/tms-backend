@@ -45,5 +45,6 @@ class TripStopCompletionSerializer(serializers.Serializer):
     """
     Serializer for completing trip stops
     """
+
     driver_profile = serializers.PrimaryKeyRelatedField(queryset=DriverProfile.objects.all())
     notes = serializers.CharField(required=False, allow_blank=True, max_length=500)

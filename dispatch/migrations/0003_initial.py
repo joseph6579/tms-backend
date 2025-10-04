@@ -21,97 +21,190 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='order',
             name='added_by_user',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='added_order', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='added_order',
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
             model_name='order',
             name='buyer',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='buyer_orders', to='organisations.customer', verbose_name='Buyer'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='buyer_orders',
+                to='organisations.customer',
+                verbose_name='Buyer',
+            ),
         ),
         migrations.AddField(
             model_name='order',
             name='driver_profile',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to='fleet.driverprofile'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='orders',
+                to='fleet.driverprofile',
+            ),
         ),
         migrations.AddField(
             model_name='order',
             name='drop_off',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='drop_off_orders', to='dispatch.location', verbose_name='Drop Off Location'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name='drop_off_orders',
+                to='dispatch.location',
+                verbose_name='Drop Off Location',
+            ),
         ),
         migrations.AddField(
             model_name='order',
             name='organisation',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='organisations.organisation'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='organisations.organisation'
+            ),
         ),
         migrations.AddField(
             model_name='order',
             name='pickup',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='pickup_orders', to='dispatch.location', verbose_name='Pickup Location'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name='pickup_orders',
+                to='dispatch.location',
+                verbose_name='Pickup Location',
+            ),
         ),
         migrations.AddField(
             model_name='order',
             name='recipient',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='organisations.customer', verbose_name='Recipient'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='orders',
+                to='organisations.customer',
+                verbose_name='Recipient',
+            ),
         ),
         migrations.AddField(
             model_name='order',
             name='store',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to='organisations.store'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='orders',
+                to='organisations.store',
+            ),
         ),
         migrations.AddField(
             model_name='orderreview',
             name='driver',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='order_reviews', to='users.driver'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='order_reviews', to='users.driver'
+            ),
         ),
         migrations.AddField(
             model_name='orderreview',
             name='order',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reviews', to='dispatch.order'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='reviews', to='dispatch.order'
+            ),
         ),
         migrations.AddField(
             model_name='orderreview',
             name='reviewed_by',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL
+            ),
         ),
         migrations.AddField(
             model_name='trip',
             name='driver_profile',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='trips', to='fleet.driverprofile'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='trips',
+                to='fleet.driverprofile',
+            ),
         ),
         migrations.AddField(
             model_name='trip',
             name='organisation',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='trips', to='organisations.organisation'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='trips',
+                to='organisations.organisation',
+            ),
         ),
         migrations.AddField(
             model_name='trip',
             name='vehicle',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='fleet.vehicle', verbose_name='Vehicle'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to='fleet.vehicle',
+                verbose_name='Vehicle',
+            ),
         ),
         migrations.AddField(
             model_name='order',
             name='trip',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='orders', to='dispatch.trip', verbose_name='Trip'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='orders',
+                to='dispatch.trip',
+                verbose_name='Trip',
+            ),
         ),
         migrations.AddField(
             model_name='tripstop',
             name='completed_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='completed_stops', to='fleet.driverprofile'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='completed_stops',
+                to='fleet.driverprofile',
+            ),
         ),
         migrations.AddField(
             model_name='tripstop',
             name='driver_profile',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='stops', to='fleet.driverprofile'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='stops',
+                to='fleet.driverprofile',
+            ),
         ),
         migrations.AddField(
             model_name='tripstop',
             name='order',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='stops', to='dispatch.order'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='stops',
+                to='dispatch.order',
+            ),
         ),
         migrations.AddField(
             model_name='tripstop',
             name='trip',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='stops', to='dispatch.trip'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='stops', to='dispatch.trip'
+            ),
         ),
         migrations.AddIndex(
             model_name='location',
@@ -127,6 +220,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='order',
-            constraint=models.UniqueConstraint(fields=('reference_number', 'organisation'), name='unique_ref_number_org'),
+            constraint=models.UniqueConstraint(
+                fields=('reference_number', 'organisation'), name='unique_ref_number_org'
+            ),
         ),
     ]

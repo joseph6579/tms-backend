@@ -20,47 +20,75 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='driverpayment',
             name='driver',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='payments', to='users.driver'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='payments', to='users.driver'
+            ),
         ),
         migrations.AddField(
             model_name='driverpayment',
             name='driver_group',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='payments', to='fleet.drivergroup'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT, related_name='payments', to='fleet.drivergroup'
+            ),
         ),
         migrations.AddField(
             model_name='driverprofile',
             name='driver',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='profiles', to='users.driver'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='profiles', to='users.driver'
+            ),
         ),
         migrations.AddField(
             model_name='driverprofile',
             name='driver_group',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='drivers', to='fleet.drivergroup'),
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='drivers',
+                to='fleet.drivergroup',
+            ),
         ),
         migrations.AddField(
             model_name='driverprofile',
             name='organisation',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='driver_profiles', to='organisations.organisation'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='driver_profiles',
+                to='organisations.organisation',
+            ),
         ),
         migrations.AddField(
             model_name='driverprofilelogs',
             name='profile',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='action_logs', to='fleet.driverprofile'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='action_logs', to='fleet.driverprofile'
+            ),
         ),
         migrations.AddField(
             model_name='driverprofilelogs',
             name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='driver_profile_logs', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name='driver_profile_logs',
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
             model_name='paymentdeduction',
             name='payment',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='deduction_records', to='fleet.driverpayment'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='deduction_records', to='fleet.driverpayment'
+            ),
         ),
         migrations.AddField(
             model_name='paymentmodel',
             name='organisation',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='payment_models', to='organisations.organisation'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='payment_models',
+                to='organisations.organisation',
+            ),
         ),
         migrations.AddField(
             model_name='driverpayment',
@@ -70,27 +98,39 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='drivergroup',
             name='payment_model',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='driver_groups', to='fleet.paymentmodel'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT, related_name='driver_groups', to='fleet.paymentmodel'
+            ),
         ),
         migrations.AddField(
             model_name='vehicle',
             name='organisation',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='vehicles', to='organisations.organisation'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='vehicles', to='organisations.organisation'
+            ),
         ),
         migrations.AddField(
             model_name='driverprofile',
             name='vehicle',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='driver_profile', to='fleet.vehicle'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='driver_profile', to='fleet.vehicle'
+            ),
         ),
         migrations.AddField(
             model_name='vehicleassignmentlogs',
             name='assigned_by',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_vehicle_assignments', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='user_vehicle_assignments',
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
             model_name='vehicleassignmentlogs',
             name='driver',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='vehicle_assignments', to='users.driver'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name='vehicle_assignments', to='users.driver'
+            ),
         ),
         migrations.AddField(
             model_name='vehicleassignmentlogs',
@@ -119,6 +159,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='driverprofile',
-            constraint=models.UniqueConstraint(fields=('national_id', 'organisation'), name='unique_national_id_organisation'),
+            constraint=models.UniqueConstraint(
+                fields=('national_id', 'organisation'), name='unique_national_id_organisation'
+            ),
         ),
     ]

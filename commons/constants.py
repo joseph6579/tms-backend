@@ -4,11 +4,10 @@ from pydantic import BaseModel
 from django.db import models
 from pydantic import BaseModel, Field, model_validator
 
+
 class StatusConfig(BaseModel):
     name: str
     is_ative: bool = True
-
-
 
 
 class DriverStatusChoices(models.TextChoices):
@@ -96,52 +95,60 @@ class OrderStatusConfiguration(BaseModel):
     SCHEDULED: StatusCombinedConfig = Field(
         default_factory=lambda: StatusCombinedConfig(is_active=False),
         description='Order is scheduled for pickup',
-        alias=OrderStatusChoices.SCHEDULED.value
+        alias=OrderStatusChoices.SCHEDULED.value,
     )
     PENDING: StatusCombinedConfig = Field(
         default_factory=lambda: StatusCombinedConfig(is_active=True),
         description='Order is pending and waiting for driver assignment',
-        alias=OrderStatusChoices.PENDING.value
+        alias=OrderStatusChoices.PENDING.value,
     )
     BROADCASTED: StatusCombinedConfig = Field(
         default_factory=lambda: StatusCombinedConfig(is_active=True),
         description='Order has been broadcasted to drivers',
-        alias=OrderStatusChoices.BROADCASTED.value
+        alias=OrderStatusChoices.BROADCASTED.value,
     )
     ASSIGNED: StatusCombinedConfig = Field(
         default_factory=lambda: StatusCombinedConfig(is_active=True),
         description='Order has been assigned to a driver',
-        alias=OrderStatusChoices.ASSIGNED.value
+        alias=OrderStatusChoices.ASSIGNED.value,
     )
     IN_PROGRESS: StatusCombinedConfig = Field(
-        default_factory=lambda: StatusCombinedConfig(is_active=True, is_trip_stop=True, stop_type=TripStopTypeChoices.PICKUP.value),
+        default_factory=lambda: StatusCombinedConfig(
+            is_active=True, is_trip_stop=True, stop_type=TripStopTypeChoices.PICKUP.value
+        ),
         description='Order is currently being delivered',
-        alias=OrderStatusChoices.IN_PROGRESS.value
+        alias=OrderStatusChoices.IN_PROGRESS.value,
     )
     ARRIVED_AT_PICKUP: StatusCombinedConfig = Field(
-        default_factory=lambda: StatusCombinedConfig(is_active=False, is_trip_stop=True, stop_type=TripStopTypeChoices.PICKUP.value),
+        default_factory=lambda: StatusCombinedConfig(
+            is_active=False, is_trip_stop=True, stop_type=TripStopTypeChoices.PICKUP.value
+        ),
         description='Driver has arrived at the pickup location',
-        alias=OrderStatusChoices.ARRIVED_AT_PICKUP.value
+        alias=OrderStatusChoices.ARRIVED_AT_PICKUP.value,
     )
     ARRIVED_AT_DROP_OFF: StatusCombinedConfig = Field(
-        default_factory=lambda: StatusCombinedConfig(is_active=False, is_trip_stop=True, stop_type=TripStopTypeChoices.DROPOFF.value),
+        default_factory=lambda: StatusCombinedConfig(
+            is_active=False, is_trip_stop=True, stop_type=TripStopTypeChoices.DROPOFF.value
+        ),
         description='Driver has arrived at the drop-off location',
-        alias=OrderStatusChoices.ARRIVED_AT_DROP_OFF.value
+        alias=OrderStatusChoices.ARRIVED_AT_DROP_OFF.value,
     )
     COMPLETED: StatusCombinedConfig = Field(
-        default_factory=lambda: StatusCombinedConfig(is_active=True, is_trip_stop=True, stop_type=TripStopTypeChoices.DROPOFF.value),
+        default_factory=lambda: StatusCombinedConfig(
+            is_active=True, is_trip_stop=True, stop_type=TripStopTypeChoices.DROPOFF.value
+        ),
         description='Order has been successfully delivered',
-        alias=OrderStatusChoices.COMPLETED.value
+        alias=OrderStatusChoices.COMPLETED.value,
     )
     CANCELLED: StatusCombinedConfig = Field(
         default=StatusCombinedConfig(is_active=True),
         description='Order has been cancelled',
-        alias=OrderStatusChoices.CANCELLED.value
+        alias=OrderStatusChoices.CANCELLED.value,
     )
     FAILED: StatusCombinedConfig = Field(
         default=StatusCombinedConfig(is_active=False),
         description='Order delivery has failed',
-        alias=OrderStatusChoices.FAILED.value
+        alias=OrderStatusChoices.FAILED.value,
     )
 
     @model_validator(mode="after")
@@ -176,6 +183,7 @@ class OrderStatusConfiguration(BaseModel):
 
         return self
 
+
 class TimezoneChoices(models.TextChoices):
     UTC = 'UTC', 'UTC'
     EST = 'EST', 'Eastern Standard Time'
@@ -201,4 +209,3 @@ def default_order_status_config():
 #     @classmethod
 #   def choices(cls):
 #       return [(value, value.replace('_', ' ').title()) for value in cls.__annotations__.values()]
-

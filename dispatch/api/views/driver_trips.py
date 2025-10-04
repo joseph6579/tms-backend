@@ -26,16 +26,23 @@ class DriverTripViewSet(viewsets.ReadOnlyModelViewSet):
         # trip stop fields
         trip_stop_fields = driver_trips_svc.trip_stop_fields()
         trip_stop_prefetch = Prefetch('stops', queryset=TripStop.objects.only(*trip_stop_fields))
-        
+
         # order related fields
         order_related_fields = driver_trips_svc.order_related_fields()
         order_fields = driver_trips_svc.order_fields()
-        orders_prefetch = Prefetch('orders', queryset=Order.objects.select_related(*order_related_fields).only(*order_fields))
+        orders_prefetch = Prefetch(
+            'orders', queryset=Order.objects.select_related(*order_related_fields).only(*order_fields)
+        )
 
         # Trip related fields
         triple_related_fields = driver_trips_svc.trip_related_fields()
         # Trip fields to fetch
         trip_fields = driver_trips_svc.trip_fields()
         incomplete_trip_statuses = TripStatusChoices.incomplete_statuses()
-        qs = Trip.objects.only(*trip_fields).select_related(*triple_related_fields).prefetch_related(trip_stop_prefetch, orders_prefetch).filter(status__in=incomplete_trip_statuses)
+        qs = (
+            Trip.objects.only(*trip_fields)
+            .select_related(*triple_related_fields)
+            .prefetch_related(trip_stop_prefetch, orders_prefetch)
+            .filter(status__in=incomplete_trip_statuses)
+        )
         return qs

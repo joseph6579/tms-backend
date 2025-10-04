@@ -8,8 +8,13 @@ from django.utils import timezone
 from django.db import transaction
 
 
-from commons.constants import OrderStatusConfiguration, TripStopTypeChoices, OrderStatusChoices, DriverStatusChoices, \
-    TripStatusChoices
+from commons.constants import (
+    OrderStatusConfiguration,
+    TripStopTypeChoices,
+    OrderStatusChoices,
+    DriverStatusChoices,
+    TripStatusChoices,
+)
 from dispatch.models import Trip, TripStop, Order, Location
 
 from commons.constants import TripStopTypeChoices, OrderStatusChoices
@@ -34,9 +39,7 @@ import uuid
 #     dropoff: TripStepLocation
 
 
-
 class TripService:
-
     @staticmethod
     def fetch_stops_configuration(org: Organisation) -> dict:
         """
@@ -68,9 +71,10 @@ class TripService:
                 result[stop_type].append({'stop': alias, 'notifications': notifications, 'sla': sla})
         return result
 
-
     @transaction.atomic
-    def construct_bare_trip_step_data(self, org: Organisation, trip: Trip, orders: List[Order], driver_profile: DriverProfile = None):
+    def construct_bare_trip_step_data(
+        self, org: Organisation, trip: Trip, orders: List[Order], driver_profile: DriverProfile = None
+    ):
         """
         Handles creation of trip stops for non-optimized trips. The method outlines the steps
         1. Fetch the organization's stop configuration using fetch_stops_configuration.
@@ -100,7 +104,7 @@ class TripService:
                         sequence=0,  # Sequence should be set appropriately
                         notifications=notifications,
                         sla=sla,
-                        driver_profile=driver_profile
+                        driver_profile=driver_profile,
                     )
                 )
 
@@ -119,7 +123,7 @@ class TripService:
                         sequence=0,  # Sequence should be set appropriately
                         notifications=notifications,
                         sla=sla,
-                        driver_profile=driver_profile
+                        driver_profile=driver_profile,
                     )
                 )
 
@@ -138,7 +142,7 @@ class TripService:
                 sequence=0,  # Sequence should be set appropriately
                 notifications=None,
                 sla=None,
-                driver_profile=driver_profile
+                driver_profile=driver_profile,
             )
         )
         all_trip_stops.append(
@@ -150,7 +154,7 @@ class TripService:
                 sequence=0,  # Sequence should be set appropriately
                 notifications=None,
                 sla=None,
-                driver_profile=driver_profile
+                driver_profile=driver_profile,
             )
         )
         TripStop.objects.bulk_create(all_trip_stops)
@@ -176,7 +180,7 @@ class TripService:
             start_point=start_location.coordinates,
             end_point=end_location.coordinates,
             scheduled_start_time=timezone.now(),
-            status=status
+            status=status,
         )
         return trip
 
@@ -199,8 +203,6 @@ class TripService:
     def validate_driver_availability(driver_profile: DriverProfile) -> bool:
         """Validate that the driver is active and available"""
         return driver_profile.status == DriverStatusChoices.AVAILABLE
-
-
 
     @staticmethod
     def format_orders_for_optimization(orders: List[Order], vehicles: List[Vehicle]) -> dict:
@@ -244,10 +246,7 @@ class TripService:
 
     @staticmethod
     def create_trip_from_optimization(
-        optimization_result: dict,
-        orders: List[Order],
-        organization: Organisation,
-        driver: Optional[Driver] = None
+        optimization_result: dict, orders: List[Order], organization: Organisation, driver: Optional[Driver] = None
     ) -> Optional[Trip]:
         """Create a trip from optimization engine result"""
         if not optimization_result:
@@ -396,6 +395,7 @@ class TripService:
 
 trip_svc = TripService()
 
+
 class TripBuilder:
     """
     Service class used to create a trip, its trip stops and update the orders
@@ -513,4 +513,3 @@ class TripBuilder:
     def _update_orders(self):
         status = OrderStatusChoices.ASSIGNED.value if self.driver_profile else OrderStatusChoices.BROADCASTED.value
         self.orders_qs.update(status=status, trip_id=self.trip.id, driver_profile=self.driver_profile)
-

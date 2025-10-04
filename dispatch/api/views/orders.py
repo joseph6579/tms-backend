@@ -98,7 +98,6 @@ class OrderManagementViewset(ReadOnlyModelViewSet):
         data = OrderListSerializer(instance=obj).data
         return Response(data, status=status.HTTP_200_OK)
 
-
     @action(detail=False, methods=['post'], serializer_class=DispatchOrdersSerializer, url_path='dispatch')
     def dispatch_orders(self, request, *args, **kwargs):
         """Dispatch orders to drivers"""
@@ -115,22 +114,15 @@ class OrderManagementViewset(ReadOnlyModelViewSet):
 
         if not trip_svc.validate_order_statuses(orders=orders):
             return Response(
-                {'detail': 'One or more orders are not in a dispatchable state'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'detail': 'One or more orders are not in a dispatchable state'}, status=status.HTTP_400_BAD_REQUEST
             )
 
         if profile:
             if not trip_svc.validate_driver_availability(driver_profile=profile):
-                return Response(
-                    {'detail': 'Driver is not available for dispatch'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({'detail': 'Driver is not available for dispatch'}, status=status.HTTP_400_BAD_REQUEST)
 
         trip = trip_svc.create_trip(org=org, orders=orders, driver_profile=profile)
         trip_svc.construct_bare_trip_step_data(org=org, trip=trip, orders=orders, driver_profile=profile)
         trip_svc.update_trip_orders(trip=trip, orders=orders)
 
-        return Response(
-            {'detail': f'Dispatched {len(orders)} orders'},
-            status=status.HTTP_200_OK
-        )
+        return Response({'detail': f'Dispatched {len(orders)} orders'}, status=status.HTTP_200_OK)

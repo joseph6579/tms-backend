@@ -13,6 +13,15 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='driverprofile',
             name='status',
-            field=models.CharField(choices=[('offline', 'Offline'), ('busy', 'Busy'), ('available', 'available'), ('inactive', 'Inactive')], db_index=True, default='available'),
+            field=models.CharField(
+                choices=[
+                    ('offline', 'Offline'),
+                    ('busy', 'Busy'),
+                    ('available', 'available'),
+                    ('inactive', 'Inactive'),
+                ],
+                db_index=True,
+                default='available',
+            ),
         ),
     ]

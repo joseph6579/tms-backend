@@ -9,7 +9,6 @@ from fleet.models import DriverProfile
 
 
 class TripStopCompletionService:
-    
     @staticmethod
     def verify_stop_ownership(stop: TripStop, driver_profile: DriverProfile):
         if stop.trip.driver_profile != driver_profile:
@@ -29,7 +28,6 @@ class TripStopCompletionService:
     def verify_stop_not_completed(stop: TripStop):
         if stop.completed:
             raise ValidationError(_("Stop is already completed"))
-
 
     @staticmethod
     def verify_stop_sequence(stop: TripStop):
@@ -70,7 +68,6 @@ class TripStopCompletionService:
                     fields.append('date_delivered')
                 order.save(update_fields=fields)
 
-
     @transaction.atomic
     def complete_stop(self, stop: TripStop, driver_profile: DriverProfile, notes: str = None):
         self.verify_stop_ownership(stop, driver_profile)
@@ -80,7 +77,6 @@ class TripStopCompletionService:
         self.mark_stop_completed(stop, driver_profile, notes)
         stop.save(update_fields=['completed', 'completed_by', 'completed_at', 'notes'])
         self.update_order_status_if_applicable(stop)
-
 
 
 trip_stop_completion_svc = TripStopCompletionService()

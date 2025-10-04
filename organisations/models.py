@@ -10,11 +10,11 @@ from dispatch.models import Location
 from organisations.preferences.schemas.trip_stops import default_steps_config
 
 
-
 class Permission(CommonInfo):
     """
     Model to represent custom permissions for organizations
     """
+
     name = models.CharField(max_length=100)
     codename = models.CharField(max_length=100)
     description = models.TextField(blank=True)
@@ -34,6 +34,7 @@ class Role(CommonInfo):
     """
     Model to represent custom roles for organizations
     """
+
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     organisation = models.ForeignKey('Organisation', on_delete=models.CASCADE, related_name='roles')
@@ -54,6 +55,7 @@ class Package(CommonInfo):
     """
     Model to represent subscription packages available to organizations
     """
+
     name = models.CharField(max_length=100)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -81,6 +83,7 @@ class OrganisationSubscription(CommonInfo):
     """
     Model to track organization subscriptions
     """
+
     organisation = models.ForeignKey('Organisation', on_delete=models.CASCADE, related_name='subscriptions')
     package = models.ForeignKey(Package, on_delete=models.PROTECT)
     start_date = models.DateTimeField()
@@ -101,7 +104,6 @@ class OrganisationSubscription(CommonInfo):
         verbose_name = 'Organisation Subscription'
         verbose_name_plural = 'Organisation Subscriptions'
         ordering = ['-start_date']
-
 
 
 class OrganisationPreferences(CommonInfo):
@@ -127,7 +129,6 @@ class OrganisationPreferences(CommonInfo):
         verbose_name_plural = 'Organisation Preferences'
 
 
-
 class Organisation(CommonInfo):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     name = models.CharField(max_length=255, unique=True)
@@ -142,7 +143,6 @@ class Organisation(CommonInfo):
         verbose_name_plural = 'Organisations'
         db_table = 'organisations'
         ordering = ['-id']
-
 
 
 class OrganisationConfiguration(CommonInfo):
@@ -163,18 +163,18 @@ class OrganisationConfiguration(CommonInfo):
     max_login_attempts = models.PositiveIntegerField(default=5)
     lockout_duration_minutes = models.PositiveIntegerField(default=15)
     order_status_configuration = models.JSONField(
-        default=default_order_status_config,
-        help_text="Configuration for different order statuses"
+        default=default_order_status_config, help_text="Configuration for different order statuses"
     )
     timezone = models.CharField(max_length=50, default=TimezoneChoices.UTC.value, choices=TimezoneChoices.choices)
-    default_language = models.CharField(max_length=10, default=LanguageChoices.English.value, choices=LanguageChoices.choices)
-
+    default_language = models.CharField(
+        max_length=10, default=LanguageChoices.English.value, choices=LanguageChoices.choices
+    )
 
     class Meta:
         verbose_name = 'Organisation Configuration'
         verbose_name_plural = 'Organisation Configurations'
 
-        
+
 class Store(CommonInfo):
     id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     key = models.CharField(max_length=100, blank=True)

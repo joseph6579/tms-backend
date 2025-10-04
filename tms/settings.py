@@ -293,4 +293,3 @@ PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY', cast=str, default='')
 
 GDAL_LIBRARY_PATH = config('GDAL_LIBRARY_PATH', cast=str)
 GEOS_LIBRARY_PATH = config('GEOS_LIBRARY_PATH', cast=str)
-

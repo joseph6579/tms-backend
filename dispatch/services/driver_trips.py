@@ -1,5 +1,4 @@
 class DriverTripsService:
-
     @staticmethod
     def trip_related_fields():
         return ['driver_profile', 'vehicle']
@@ -27,19 +26,11 @@ class DriverTripsService:
 
     @staticmethod
     def trip_stop_fields():
-        return [
-            'id',
-            'coordinates',
-            'sequence',
-            'stop_type',
-            'trip_id',
-            'order_id'
-        ]
+        return ['id', 'coordinates', 'sequence', 'stop_type', 'trip_id', 'order_id']
 
     @staticmethod
     def order_related_fields():
         return ['recipient', 'buyer', 'store', 'pickup', 'drop_off']
-
 
     @staticmethod
     def order_fields():
@@ -52,7 +43,7 @@ class DriverTripsService:
             'buyer_id',
             'store_id',
             'pickup_id',
-            'drop_off_id'
+            'drop_off_id',
         ]
 
 
