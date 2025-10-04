@@ -182,6 +182,10 @@ class Store(CommonInfo):
     name = models.CharField(max_length=255, db_index=True)
     location = models.JSONField(default=dict)
     broadcast_radius = models.PositiveIntegerField(default=50, help_text='maximum broadcast radius')
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f'{self.name}'

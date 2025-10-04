@@ -9,78 +9,7 @@ from dispatch.api.serializers.trip_stops import TripStopListSerializer, TripStop
 from dispatch.models import TripStop
 from dispatch.api.serializers.trips import TripStopSerializer
 from dispatch.utils import stop_type_to_order_status
-
-
-class TripStopViewSetOld(viewsets.ModelViewSet):
-    serializer_class = TripStopSerializer
-
-    def get_queryset(self):
-        return TripStop.objects.filter(trip__driver__organisation=self.request.user.organisation)
-
-    @action(detail=True, methods=['post'])
-    def complete(self, request, pk=None):
-        """Mark a trip stop as completed"""
-        stop = self.get_object()
-
-        if stop.status == 'completed':
-            return Response({'detail': 'Stop already completed'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if stop.trip.status not in ['in_progress', 'scheduled']:
-            return Response({'detail': 'Trip is not in progress'}, status=status.HTTP_400_BAD_REQUEST)
-
-        stop.status = 'completed'
-        stop.completed_at = timezone.now()
-        stop.completed_by = request.user
-        stop.save()
-
-        # Update order status if this is a delivery stop
-        if stop.stop_type == 'drop_off' and stop.order:
-            stop.order.status = 'completed'
-            stop.order.date_delivered = timezone.now()
-            stop.order.save()
-
-        # Check if all stops are completed
-        if not stop.trip.stops.exclude(status='completed').exists():
-            stop.trip.status = 'completed'
-            stop.trip.completed_time = timezone.now()
-            stop.trip.save()
-
-        serializer = self.get_serializer(stop)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def arrive(self, request, pk=None):
-        """Mark arrival at a trip stop"""
-        stop = self.get_object()
-
-        if stop.status != 'pending':
-            return Response({'detail': 'Stop is not pending'}, status=status.HTTP_400_BAD_REQUEST)
-
-        stop.status = 'arrived'
-        stop.actual_arrival = timezone.now()
-        stop.save()
-
-        serializer = self.get_serializer(stop)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def skip(self, request, pk=None):
-        """Mark a trip stop as skipped"""
-        stop = self.get_object()
-
-        if stop.status in ['completed', 'skipped']:
-            return Response({'detail': 'Stop already completed or skipped'}, status=status.HTTP_400_BAD_REQUEST)
-
-        reason = request.data.get('reason')
-        if not reason:
-            return Response({'detail': 'Reason is required for skipping a stop'}, status=status.HTTP_400_BAD_REQUEST)
-
-        stop.status = 'skipped'
-        stop.notes = reason
-        stop.save()
-
-        serializer = self.get_serializer(stop)
-        return Response(serializer.data)
+from dispatch.services.trip_stop_completion import trip_stop_completion_svc
 
 
 class TripStopViewSet(viewsets.ReadOnlyModelViewSet):
@@ -128,22 +57,13 @@ class TripStopViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return qs.none()
 
-    @transaction.atomic()
     @action(methods=['post'], detail=True, url_path='complete', serializer_class=TripStopCompletionSerializer)
     def complete(self, request, *args, **kwargs):
-        user = request.user
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        driver_profile = data.get('driver_profile')
+        notes = data.get('note', None)
         stop = self.get_object()
-        if not stop.completed:
-            if order := stop.order:
-                if user.id == stop.driver_profile_id or user.id == order.driver_profile_id:
-                    new_status = stop_type_to_order_status(stop_type=stop.stop_type)
-                    order.status = new_status
-                    order.date_delivered = timezone.now() if new_status == 'delivered' else None
-                    order.save(update_fields=['status', 'date_delivered'])
-                    stop.completed_at = timezone.now()
-                    stop.completed_by = user
-                    stop.completed = True
-                    stop.save(update_fields=['completed_at', 'completed_by', 'completed'])
-                else:
-                    return Response({'detail': 'Action not allowed'}, status=status.HTTP_403_FORBIDDEN)
+        trip_stop_completion_svc.complete_stop(stop=stop, driver_profile=driver_profile, note=notes)
         return Response({'detail': 'Action successful'}, status=status.HTTP_200_OK)

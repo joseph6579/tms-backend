@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from dispatch.models import TripStop, Location
+from fleet.models import DriverProfile
 
 
 class LocationMinimSerializer(serializers.ModelSerializer):
@@ -44,5 +45,5 @@ class TripStopCompletionSerializer(serializers.Serializer):
     """
     Serializer for completing trip stops
     """
-
-    pass
+    driver_profile = serializers.PrimaryKeyRelatedField(queryset=DriverProfile.objects.all())
+    notes = serializers.CharField(required=False, allow_blank=True, max_length=500)

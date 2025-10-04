@@ -16,3 +16,11 @@ class TripsFilter(FilterSet):
             'updated_at': ['range', 'exact'],
             'completed_time': ['range', 'exact'],
         }
+
+
+class DriverTripsFilter(FilterSet):
+    class Meta:
+        model = Trip
+        fields = {
+            'driver_profile__id': ['exact'],
+        }

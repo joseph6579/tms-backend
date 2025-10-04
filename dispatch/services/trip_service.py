@@ -196,9 +196,9 @@ class TripService:
         return True
 
     @staticmethod
-    def validate_driver_availability(driver: Driver) -> bool:
+    def validate_driver_availability(driver_profile: DriverProfile) -> bool:
         """Validate that the driver is active and available"""
-        return driver.status == DriverStatusChoices.AVAILABLE
+        return driver_profile.status == DriverStatusChoices.AVAILABLE
 
 
 
