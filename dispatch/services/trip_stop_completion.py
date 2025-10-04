@@ -3,8 +3,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.db import transaction
 
-from commons.constants import OrderStatusChoices, TripStopTypeChoices
-from dispatch.models import TripStop, Order
+from commons.constants import OrderStatusChoices, TripStopTypeChoices, TripStatusChoices
+from dispatch.models import TripStop, Order, Trip
 from fleet.models import DriverProfile
 
 
@@ -55,7 +55,6 @@ class TripStopCompletionService:
         }
         return order_status_mapping.get(stop_type)
 
-    @staticmethod
     def update_order_status_if_applicable(self, stop: TripStop):
         if stop.order:
             new_status = self.stop_type_to_order_status(stop.stop_type)
@@ -68,12 +67,42 @@ class TripStopCompletionService:
                     fields.append('date_delivered')
                 order.save(update_fields=fields)
 
+    @staticmethod
+    def start_trip(trip: Trip):
+        if trip.status not in [
+            TripStatusChoices.SCHEDULED.value,
+            TripStatusChoices.PENDING.value,
+            TripStatusChoices.ASSIGNED.value,
+        ]:
+            raise ValidationError(_("Trip cannot be started"))
+        trip.status = TripStatusChoices.ON_GOING.value
+        trip.actual_start_time = timezone.now()
+        trip.save(update_fields=['status', 'actual_start_time'])
+
+    @staticmethod
+    def complete_trip(trip: Trip):
+        if trip.status != TripStatusChoices.ON_GOING.value:
+            raise ValidationError(_("Trip cannot be completed"))
+        if (
+            TripStop.objects.filter(trip=trip, completed=False)
+            .exclude(stop_type=TripStopTypeChoices.END.value)
+            .exists()
+        ):
+            raise ValidationError(_("All stops must be completed before completing the trip"))
+        trip.status = TripStatusChoices.COMPLETED.value
+        trip.completed_time = timezone.now()
+        trip.save(update_fields=['status', 'completed_time'])
+
     @transaction.atomic
     def complete_stop(self, stop: TripStop, driver_profile: DriverProfile, notes: str = None):
         self.verify_stop_ownership(stop, driver_profile)
         self.verify_trip_ownership(stop, driver_profile)
         self.verify_stop_not_completed(stop)
-        self.verify_stop_sequence(stop)
+        if stop.stop_type == TripStopTypeChoices.START.value:
+            self.start_trip(stop.trip)
+        elif stop.stop_type == TripStopTypeChoices.END.value:
+            self.complete_trip(stop.trip)
+        # self.verify_stop_sequence(stop)
         self.mark_stop_completed(stop, driver_profile, notes)
         stop.save(update_fields=['completed', 'completed_by', 'completed_at', 'notes'])
         self.update_order_status_if_applicable(stop)

@@ -1,14 +1,10 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.utils import timezone
-from django.db import transaction
 
 from dispatch.api.filters.trip_stops import TripStopFilter
 from dispatch.api.serializers.trip_stops import TripStopListSerializer, TripStopCompletionSerializer
 from dispatch.models import TripStop
-from dispatch.api.serializers.trips import TripStopSerializer
-from dispatch.utils import stop_type_to_order_status
 from dispatch.services.trip_stop_completion import trip_stop_completion_svc
 
 
